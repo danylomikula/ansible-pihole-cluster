@@ -1,0 +1,3 @@
+- name: Reboot
+  reboot:
+    msg: "Rebooting machine"

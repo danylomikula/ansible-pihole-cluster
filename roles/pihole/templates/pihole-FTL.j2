@@ -1,0 +1,11 @@
+RATE_LIMIT={{ pihole_rate_limit }}
+LOCAL_IPV4={{ host_local_ipv4 }}
+{% if enable_ipv6_support == true %}
+LOCAL_IPV6={{ host_local_ipv6 }}
+{% endif %}
+REPLY_WHEN_BUSY={{ pihole_reply_when_busy }}
+BLOCK_ICLOUD_PR={{ pihole_block_icloud_pr }}
+PRIVACYLEVEL={{ pihole_privacy_level }}
+IGNORE_LOCALHOST=no
+SOCKET_LISTENING={{ pihole_socket_listening }}
+PIHOLE_PTR={{ pihole_ptr }}

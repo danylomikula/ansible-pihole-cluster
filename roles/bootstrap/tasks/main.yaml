@@ -1,0 +1,46 @@
+- name: Set timezone to {{ timezone }}
+  community.general.timezone:
+    name: "{{ timezone }}"
+
+- name: Install dependencies
+  package:
+    name:
+      - unzip
+    state: present
+
+- name: Set a hostname
+  hostname:
+    name: "{{ inventory_hostname }}"
+  notify: Reboot after hostname change
+
+- name: Set hosts
+  blockinfile:
+    dest: /etc/hosts
+    content: |
+      {%- if enable_ipv6_support == true -%}
+      127.0.0.1       {{ inventory_hostname }}
+      ::1             {{ inventory_hostname }}
+      {%- else -%}
+      127.0.0.1       {{ inventory_hostname }}
+      {%- endif -%}
+  notify: Reboot after hostname change
+
+- name: Add IP address of all hosts to all hosts
+  lineinfile:
+    dest: /etc/hosts
+    regexp: '.*{{ item }}$'
+    line: "{{ hostvars[item].ansible_host }} {{item}}"
+    state: present
+  when:
+  - item != inventory_hostname
+  - hostvars[item].ansible_host is defined
+  with_items: "{{ groups.all }}"
+  notify: Reboot after hostname change
+
+- name: Set SELinux to disabled state
+  ansible.posix.selinux:
+    state: disabled
+  when: ansible_os_family == "RedHat"
+
+- name: Flush handlers
+  meta: flush_handlers

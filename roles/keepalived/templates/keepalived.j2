@@ -1,0 +1,76 @@
+global_defs {
+    script_user {{ ansible_user }}
+    enable_script_security
+    max_auto_priority
+    vrrp_no_swap
+    checker_no_swap
+}
+
+vrrp_script check_pihole {
+    script "/etc/keepalived/check_pihole.sh"
+    interval 1
+    timeout 4
+    fall 1
+    rise 1
+}
+
+{% if enable_ipv6_support == true %}
+vrrp_sync_group PIHOLE {
+    group {
+        PIHOLE-IPv4
+        PIHOLE-IPv6
+    }
+
+    track_script {
+        check_pihole
+    }
+
+}
+
+vrrp_instance PIHOLE-IPv4 {
+    interface {{ ansible_default_ipv4.interface }}
+    virtual_router_id 1
+    priority {{ priority }}
+    advert_int 1
+    preempt_delay 900
+
+    virtual_ipaddress {
+        {{ pihole_vip_ipv4 }}
+    }
+}
+
+vrrp_instance PIHOLE-IPv6 {
+    interface {{ ansible_default_ipv6.interface | default(ansible_default_ipv4.interface) }}
+    virtual_router_id 1
+    priority {{ priority }}
+    advert_int 1
+    preempt_delay 900
+
+    virtual_ipaddress {
+        {{ pihole_vip_ipv6 }}
+    }
+}
+
+{% else %}
+vrrp_sync_group PIHOLE {
+    group {
+        PIHOLE-IPv4
+    }
+
+    track_script {
+        check_pihole
+    }
+}
+
+vrrp_instance PIHOLE-IPv4 {
+    interface {{ ansible_default_ipv4.interface }}
+    virtual_router_id 1
+    priority {{ priority }}
+    advert_int 1
+    preempt_delay 900
+
+    virtual_ipaddress {
+        {{ pihole_vip_ipv4 }}
+    }
+}
+{% endif %}

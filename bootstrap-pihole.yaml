@@ -1,0 +1,17 @@
+- name: Bootstrap
+  hosts: pihole_cluster
+  become: true
+  ignore_unreachable: false
+  roles:
+    - role: bootstrap
+    - role: firewalld
+      when: ansible_os_family == 'RedHat'
+    - role: updates
+    - role: ssh
+    - role: keepalived
+    - role: unbound
+      when: enable_unbound
+    - role: pihole
+    - role: gravity-sync
+      when: enable_gravity_sync
+    - role: status

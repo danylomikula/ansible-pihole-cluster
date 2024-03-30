@@ -1,0 +1,66 @@
+- name: Allow VRRP traffic
+  ansible.posix.firewalld:
+    rich_rule: rule protocol value="vrrp" accept
+    permanent: true
+    immediate: true
+    state: enabled
+
+- name: Allow HTTP service
+  ansible.posix.firewalld:
+    service: http
+    permanent: true
+    immediate: true
+    state: enabled
+
+- name: Allow HTTPS service
+  ansible.posix.firewalld:
+    service: https
+    permanent: true
+    immediate: true
+    state: enabled
+
+- name: Allow DNS service
+  ansible.posix.firewalld:
+    service: dns
+    permanent: true
+    immediate: true
+    state: enabled
+
+- name: Allow DHCP service
+  ansible.posix.firewalld:
+    service: dhcp
+    permanent: true
+    immediate: true
+    state: enabled
+
+- name: Allow DHCPv6 service
+  ansible.posix.firewalld:
+    service: dhcpv6
+    permanent: true
+    immediate: true
+    state: enabled
+  when: enable_ipv6_support == true
+
+- name: Create ftl zone
+  ansible.posix.firewalld:
+    zone: ftl
+    permanent: true
+    state: present
+
+- name: Create ftl zone lo interface
+  ansible.posix.firewalld:
+    zone: ftl
+    interface: lo
+    permanent: true
+    state: enabled
+
+- name: Allow port 4711/tcp
+  ansible.posix.firewalld:
+    zone: ftl
+    port: 4711/tcp
+    permanent: true
+    state: enabled
+
+- name: Reload firewalld
+  shell: firewall-cmd --reload
+  register: process_status

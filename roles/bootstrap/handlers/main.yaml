@@ -1,0 +1,3 @@
+- name: Reboot after hostname change
+  reboot:
+    msg: "Rebooting machine"

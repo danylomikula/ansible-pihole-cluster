@@ -1,0 +1,36 @@
+- name: Update packages [Debian]
+  apt:
+    force_apt_get: true
+    autoclean: true
+    autoremove: true
+    update_cache: true
+    upgrade: dist
+  when: ansible_os_family == 'Debian'
+
+- name: Check if reboot is needed [Debian]
+  stat:
+    path: /var/run/reboot-required
+  register: reboot_required
+  when: ansible_os_family == 'Debian'
+
+- name: Reboot [Debian]
+  reboot:
+    msg: "Rebooting machine"
+  when: 
+    - ansible_os_family == 'Debian'
+    - reboot_required.stat.exists
+
+- name: Upgrade packages [RedHat]
+  yum:
+    name: '*'
+    state: latest
+    update_cache: true
+  when: ansible_os_family == 'RedHat'
+
+- name: Reboot [RedHat]
+  command: shutdown -r now "Ansible Updates Triggered"
+  become: true
+  async: 30
+  poll: 0
+  when:
+    - ansible_os_family == 'RedHat'

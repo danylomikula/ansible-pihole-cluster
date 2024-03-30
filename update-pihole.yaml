@@ -1,0 +1,9 @@
+- name: Update
+  hosts: pihole_cluster
+  become: true
+  serial: 1
+  ignore_unreachable: false
+  roles:
+    - updates
+    - pihole
+    - status

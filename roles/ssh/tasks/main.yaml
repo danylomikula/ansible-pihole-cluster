@@ -1,0 +1,35 @@
+- name: Generate SSH keypairs
+  community.crypto.openssh_keypair:
+    path: /home/{{ ansible_user }}/.ssh/id_rsa
+    comment: "{{ inventory_hostname }}"
+    type: ed25519
+    owner: "{{ ansible_user }}"
+
+- name: Fetch SSH keys
+  fetch:
+    src: /home/{{ ansible_user }}/.ssh/id_rsa.pub
+    dest: buffer/{{ inventory_hostname }}-id_rsa.pub
+    flat: true
+
+- name: Copy SSH keys between hosts
+  authorized_key:
+    user: "{{ ansible_user }}"
+    state: present
+    key: "{{ lookup('file','buffer/{{item}}-id_rsa.pub')}}"
+  when: item != inventory_hostname
+  with_items:
+    - "{{ groups['master'] }}"
+    - "{{ groups['backup'] }}"
+
+- name: Add/update public keys in the /home/{{ ansible_user }}/.ssh/known_hosts
+  known_hosts:
+    name: "{{ item }}"
+    key: "{{ lookup('pipe', 'ssh-keyscan {{ item }},`dig +short {{ item }}`') }}"
+    path: /home/{{ ansible_user }}/.ssh/known_hosts
+  when: item != ansible_host
+  with_items:
+    - "{{ groups['master'] | map('extract', hostvars, 'ansible_host') | list }}"
+    - "{{ groups['backup'] | map('extract', hostvars, 'ansible_host') | list }}"
+
+- name: Flush handlers
+  meta: flush_handlers

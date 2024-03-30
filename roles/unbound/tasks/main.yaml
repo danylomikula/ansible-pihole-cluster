@@ -1,0 +1,63 @@
+- name: Install unbound
+  package:
+    name: unbound
+    state: present
+
+- name: Enable unbound
+  service:
+    name: unbound
+    enabled: true
+
+- name: Create unbound config
+  template:
+    dest: /etc/unbound/unbound.conf
+    src: pi-hole.j2
+    mode: 0644
+  notify: Restart unbound service
+
+- name: Flush handlers
+  meta: flush_handlers
+
+- name: Ensures /etc/dnsmasq.d dir exists
+  file:
+    path: /etc/dnsmasq.d
+    state: directory
+
+- name: Create 99-edns.conf config
+  copy:
+    src: 99-edns.conf
+    dest: /etc/dnsmasq.d/99-edns.conf
+    mode: 0644
+  notify: Restart unbound service
+
+- name: Check if resolvconf.conf exists
+  stat:
+    path: /etc/resolvconf.conf
+  register: resolvconf
+  changed_when: false
+
+- name: Check if unbound resolvconf_resolvers.conf exists
+  stat:
+    path: /etc/unbound/unbound.conf.d/resolvconf_resolvers.conf
+  register: unbound_resolvconf
+  changed_when: false
+
+- name: Disable the file resolvconf_resolvers.conf
+  shell: sed -Ei 's/^unbound_conf=/#unbound_conf=/' /etc/resolvconf.conf
+  when: resolvconf.stat.exists == true
+
+- name: Remove unbound resolvconf_resolvers.conf
+  shell: rm /etc/unbound/unbound.conf.d/resolvconf_resolvers.conf
+  when: unbound_resolvconf.stat.exists == true
+  notify: Restart unbound service
+
+- name: Check if unbound service is running
+  command: systemctl is-active unbound
+  register: unbound_status
+  retries: 3
+  delay: 5
+  until: unbound_status.rc == 0
+  changed_when: false
+
+- name: Flush handlers
+  meta: flush_handlers

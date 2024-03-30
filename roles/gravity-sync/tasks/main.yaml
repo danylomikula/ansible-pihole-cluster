@@ -1,0 +1,38 @@
+- name: Ensures /etc/gravity-sync dir exists
+  file:
+    path: /etc/gravity-sync
+    state: directory
+
+- name: Create gravity-sync.conf
+  template:
+    dest: /etc/gravity-sync/gravity-sync.conf
+    src: gravity-sync.j2
+    mode: 0644
+
+- name: Install Gravity Sync
+  shell: curl -sSL https://raw.githubusercontent.com/vmstan/gs-install/main/gs-install.sh | bash
+  register: process_status
+
+- name: Display Gravity Sync installation process
+  debug:
+    var: process_status.stdout_lines
+
+- name: Run Gravity Sync PUSH command
+  shell: gravity-sync push
+  become_user: "{{ ansible_user }}"
+  register: push_status
+  when: inventory_hostname in groups['master']
+
+- name: Display Gravity Sync PUSH process
+  debug:
+    var: push_status.stdout_lines
+  when: inventory_hostname in groups['master']
+
+- name: Automate Gravity Sync
+  shell: gravity-sync auto {{ gravity_sync_frequency }}
+  become_user: "{{ ansible_user }}"
+  register: sync_status
+
+- name: Display Gravity Sync AUTO process
+  debug:
+    var: sync_status.stdout_lines
