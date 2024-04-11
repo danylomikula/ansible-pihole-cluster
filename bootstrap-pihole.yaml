@@ -12,6 +12,6 @@
     - role: unbound
       when: enable_unbound
     - role: pihole
-    - role: gravity-sync
+    - role: gravity_sync
       when: enable_gravity_sync
     - role: status

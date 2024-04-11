@@ -1,63 +1,69 @@
 - name: Install unbound
-  package:
+  ansible.builtin.package:
     name: unbound
     state: present
 
 - name: Enable unbound
-  service:
+  ansible.builtin.service:
     name: unbound
     enabled: true
 
 - name: Create unbound config
-  template:
+  ansible.builtin.template:
     dest: /etc/unbound/unbound.conf
-    src: pi-hole.j2
+    src: pi-hole.conf.j2
     mode: 0644
   notify: Restart unbound service
 
 - name: Flush handlers
-  meta: flush_handlers
+  ansible.builtin.meta: flush_handlers
 
 - name: Ensures /etc/dnsmasq.d dir exists
-  file:
+  ansible.builtin.file:
     path: /etc/dnsmasq.d
     state: directory
+    mode: 0644
 
 - name: Create 99-edns.conf config
-  copy:
+  ansible.builtin.copy:
     src: 99-edns.conf
     dest: /etc/dnsmasq.d/99-edns.conf
     mode: 0644
   notify: Restart unbound service
 
 - name: Check if resolvconf.conf exists
-  stat:
+  ansible.builtin.stat:
     path: /etc/resolvconf.conf
   register: resolvconf
   changed_when: false
 
 - name: Check if unbound resolvconf_resolvers.conf exists
-  stat:
+  ansible.builtin.stat:
     path: /etc/unbound/unbound.conf.d/resolvconf_resolvers.conf
   register: unbound_resolvconf
   changed_when: false
 
 - name: Disable the file resolvconf_resolvers.conf
-  shell: sed -Ei 's/^unbound_conf=/#unbound_conf=/' /etc/resolvconf.conf
-  when: resolvconf.stat.exists == true
+  ansible.builtin.lineinfile:
+    path: /etc/resolvconf.conf
+    regexp: '^unbound_conf='
+    line: '#unbound_conf='
+  when: resolvconf.stat.exists
 
 - name: Remove unbound resolvconf_resolvers.conf
-  shell: rm /etc/unbound/unbound.conf.d/resolvconf_resolvers.conf
-  when: unbound_resolvconf.stat.exists == true
+  ansible.builtin.file:
+    path: /etc/unbound/unbound.conf.d/resolvconf_resolvers.conf
+    state: absent
+  when: unbound_resolvconf.stat.exists
   notify: Restart unbound service
 
 - name: Check if unbound service is running
-  command: systemctl is-active unbound
+  ansible.builtin.systemd:
+    name: unbound
   register: unbound_status
-  retries: 3
+  retries: 10
   delay: 5
-  until: unbound_status.rc == 0
-  changed_when: false
+  until: unbound_status.status.ActiveState == 'active'
 
 - name: Flush handlers
-  meta: flush_handlers
+  ansible.builtin.meta: flush_handlers

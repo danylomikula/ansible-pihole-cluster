@@ -1,5 +1,5 @@
 - name: Ensure core services are started
-  service:
+  ansible.builtin.service:
     name: "{{ item }}"
     state: started
   register: result
@@ -11,7 +11,7 @@
     - '"Could not find service" not in result.msg'
 
 - name: Ensure unbound service is started
-  service:
+  ansible.builtin.service:
     name: unbound
     state: started
   when: enable_unbound
@@ -21,12 +21,12 @@
     - '"Could not find unbound service" not in result.msg'
 
 - name: "Determine Pi-hole host IPs"
-  set_fact:
+  ansible.builtin.set_fact:
     pihole_local_ipv4: "{{ pihole_vip_ipv4.split('/')[0] }}"
-    pihole_local_ipv6: "{% if enable_ipv6_support == true %} '{{ pihole_vip_ipv6.split('/')[0] }}' {% else %} IPv6 Support Disabled, no IPv6 Address. {% endif %}"
+    pihole_local_ipv6: "{% if enable_ipv6_support == true %} '{{ pihole_vip_ipv6.split('/')[0] }}' {% else %} IPv6 Support Disabled. {% endif %}"
 
 - name: "INFORMATION"
-  debug:
+  ansible.builtin.debug:
     msg:
       - "Make sure to point your DNS server settings here:"
       - "DNSv4: {{ pihole_local_ipv4 }}"

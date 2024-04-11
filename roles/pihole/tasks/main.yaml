@@ -1,74 +1,78 @@
 - name: Set facts for IPv4 addresses
-  set_fact:
+  ansible.builtin.set_fact:
     host_local_ipv4: "{{ ansible_default_ipv4.address }}"
 
 - name: Set facts for IPv6 addresses
-  set_fact:
+  ansible.builtin.set_fact:
     host_local_ipv6: "{{ ansible_default_ipv6.address }}"
-  when: enable_ipv6_support == true
+  when: enable_ipv6_support
 
 - name: Ensures /etc/pihole dir exists
-  file: 
+  ansible.builtin.file:
     path: /etc/pihole
     state: directory
+    mode: 0775
 
 - name: Ensures /etc/dnsmasq.d dir exists
-  file: 
+  ansible.builtin.file:
     path: /etc/dnsmasq.d
     state: directory
+    mode: 0755
 
 - name: Create PiHole setupVars.conf
-  template:
+  ansible.builtin.template:
     dest: /etc/pihole/setupVars.conf
-    src: setupVars.j2
+    src: setupVars.conf.j2
     mode: 0644
 
 - name: Create PiHole pihole-FTL.conf
-  template:
+  ansible.builtin.template:
     dest: /etc/pihole/pihole-FTL.conf
-    src: pihole-FTL.j2
+    src: pihole-FTL.conf.j2
     mode: 0644
 
 - name: Create PiHole DNS custom.list
-  template:
+  ansible.builtin.template:
     dest: /etc/pihole/custom.list
-    src: dns-custom-list.j2
+    src: dns-custom-list.list.j2
     mode: 0644
   when: local_dns_records is defined
 
 - name: Create PiHole CNAME 05-pihole-custom-cname.conf
-  template:
+  ansible.builtin.template:
     dest: /etc/dnsmasq.d/05-pihole-custom-cname.conf
-    src: cname-custom-list.j2
+    src: cname-custom-list.conf.j2
     mode: 0644
   when: local_cname_records is defined
 
 - name: Download PiHole
-  unarchive:
+  ansible.builtin.unarchive:
     src: https://github.com/pi-hole/pi-hole/archive/refs/tags/v{{ pihile_version }}.zip
     dest: /tmp
     remote_src: true
 
 - name: Install PiHole
-  shell: |
+  ansible.builtin.shell: |
     {% if ansible_os_family == 'RedHat' %}
     export PIHOLE_SKIP_OS_CHECK=true
     {% endif %}
     bash /tmp/pi-hole-{{ pihile_version }}/automated\ install/basic-install.sh --unattended
     rm -rf /tmp/*{{ pihile_version }}*
   register: process_status
+  changed_when: false
 
 - name: Display installation process
-  debug:
+  ansible.builtin.debug:
     var: process_status.stdout_lines
 
 - name: Check if Pi-hole FTL service is running
-  command: systemctl is-active pihole-FTL
+  ansible.builtin.systemd:
+    name: pihole-FTL
   register: pihole_ftl_status
   retries: 10
   delay: 5
-  until: pihole_ftl_status.rc == 0
-  changed_when: false
+  until: pihole_ftl_status.status.ActiveState == 'active'
 
 - name: Set Pi-hole FTL WEB password
-  shell: pihole -a -p {{ pihole_webpassword }}
+  ansible.builtin.command: pihole -a -p {{ pihole_webpassword }}
+  changed_when: false

@@ -39,7 +39,7 @@
     permanent: true
     immediate: true
     state: enabled
-  when: enable_ipv6_support == true
+  when: enable_ipv6_support
 
 - name: Create ftl zone
   ansible.posix.firewalld:
@@ -62,5 +62,6 @@
     state: enabled
 
 - name: Reload firewalld
-  shell: firewall-cmd --reload
+  ansible.builtin.command: firewall-cmd --reload
   register: process_status
+  changed_when: false

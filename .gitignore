@@ -1,2 +1,4 @@
 buffer/
 *.log
+.vscode
+.DS_Store

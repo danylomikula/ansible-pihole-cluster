@@ -1,38 +1,42 @@
 - name: Ensures /etc/gravity-sync dir exists
-  file:
+  ansible.builtin.file:
     path: /etc/gravity-sync
     state: directory
+    mode: 0755
 
 - name: Create gravity-sync.conf
-  template:
+  ansible.builtin.template:
     dest: /etc/gravity-sync/gravity-sync.conf
-    src: gravity-sync.j2
+    src: gravity-sync.conf.j2
     mode: 0644
 
 - name: Install Gravity Sync
-  shell: curl -sSL https://raw.githubusercontent.com/vmstan/gs-install/main/gs-install.sh | bash
+  ansible.builtin.shell: curl -sSL https://raw.githubusercontent.com/vmstan/gs-install/main/gs-install.sh | bash
   register: process_status
+  changed_when: false
 
 - name: Display Gravity Sync installation process
-  debug:
+  ansible.builtin.debug:
     var: process_status.stdout_lines
 
 - name: Run Gravity Sync PUSH command
-  shell: gravity-sync push
+  ansible.builtin.command: gravity-sync push
   become_user: "{{ ansible_user }}"
   register: push_status
   when: inventory_hostname in groups['master']
 
 - name: Display Gravity Sync PUSH process
-  debug:
+  ansible.builtin.debug:
     var: push_status.stdout_lines
   when: inventory_hostname in groups['master']
+  changed_when: false
 
 - name: Automate Gravity Sync
-  shell: gravity-sync auto {{ gravity_sync_frequency }}
+  ansible.builtin.command: gravity-sync auto {{ gravity_sync_frequency }}
   become_user: "{{ ansible_user }}"
   register: sync_status
+  changed_when: false
 
 - name: Display Gravity Sync AUTO process
-  debug:
+  ansible.builtin.debug:
     var: sync_status.stdout_lines
