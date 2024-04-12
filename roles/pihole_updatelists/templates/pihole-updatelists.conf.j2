@@ -1,0 +1,13 @@
+{% if pihole_updatelists_adlists_url is defined %}
+ADLISTS_URL="{{ pihole_updatelists_adlists_url }}"
+{% endif %}
+{% if pihole_updatelists_whitelist_url is defined %}
+WHITELIST_URL="{{ pihole_updatelists_whitelist_url }}"
+{% endif %}
+{% if pihole_updatelists_regex_blacklist_url is defined %}
+REGEX_BLACKLIST_URL="{{ pihole_updatelists_regex_blacklist_url }}"
+{% endif %}
+{% if pihole_updatelists_regex_whitelist_url is defined %}
+REGEX_WHITELIST_URL="{{ pihole_updatelists_regex_whitelist_url }}"
+{% endif %}
+UPDATE_GRAVITY=false

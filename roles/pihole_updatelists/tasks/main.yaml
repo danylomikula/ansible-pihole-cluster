@@ -1,0 +1,49 @@
+- name: Install dependencies
+  ansible.builtin.package:
+    name:
+      - php-cli
+      - php-sqlite3
+      - php-intl
+      - php-curl
+      - wget
+    state: present
+
+- name: Create pihole-updatelists.conf
+  ansible.builtin.template:
+    dest: /etc/pihole-updatelists.conf
+    src: pihole-updatelists.conf.j2
+    mode: 0755
+
+- name: Install pihole-updatelists
+  ansible.builtin.shell: wget -O - https://raw.githubusercontent.com/jacklul/pihole-updatelists/master/install.sh | sudo bash
+  register: install_status
+  changed_when: false
+
+- name: Display pihole-updatelists installation process
+  ansible.builtin.debug:
+    var: install_status.stdout_lines
+
+- name: Remove the specified lines
+  ansible.builtin.replace:
+    path: /usr/local/sbin/pihole-updatelists
+    regexp: "(^ {8}print 'root privileges required' \\. PHP_EOL;\\n^ {8}exit\\(1\\);)"
+    replace: "        print ' ';"
+  when: ansible_os_family == 'RedHat'
+
+- name: Update lists
+  ansible.builtin.command: /usr/local/sbin/pihole-updatelists
+  register: updatelists_process_status
+  changed_when: false
+
+- name: Display update lists process
+  ansible.builtin.debug:
+    var: updatelists_process_status.stdout_lines
+
+- name: Update Pi-hole Gravity
+  ansible.builtin.command: pihole updateGravity
+  register: gravity_process_status
+  changed_when: false
+
+- name: Display Pi-hole Gravity update process
+  ansible.builtin.debug:
+    var: gravity_process_status.stdout_lines
