@@ -17,7 +17,7 @@ Has been tested on:
 - [x] Debian - version 12 (bookworm)
 - [x] Ubuntu - version 22.04 (Jammy Jellyfish)
 - [x] Ubuntu - version 23.10 (Mantic Minotaur)
-- [x] Rocky - version 9.3
+- [x] Rocky - version 9.4
 
 ## ✅ Requirements
 - Ansible 2.14+
