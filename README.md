@@ -17,7 +17,7 @@ Has been tested on:
 - [x] Debian - version 12 (bookworm)
 - [x] Ubuntu - version 22.04 (Jammy Jellyfish)
 - [x] Ubuntu - version 23.10 (Mantic Minotaur)
-- [x] Rocky - version 9
+- [x] Rocky - version 9.3
 
 ## ✅ Requirements
 - Ansible 2.14+
@@ -27,7 +27,7 @@ Has been tested on:
 - Each `node` should have a static IP address.
   > If your Linux distribution network controller is NetworkManager, you can use this example to set static IP, DNS, and gateway:<br />
     ```bash 
-    nmcli con mod "Wired connection 1" ipv4.addresses 10.0.20.50/24 ipv4.gateway 10.0.0.1 ipv4.dns "1.1.1.1 1.0.0.1" ipv4.ignore-auto-dns yes ipv4.method manual
+    nmcli con mod "Wired connection 1" ipv4.addresses 10.0.20.50/24 ipv4.gateway 10.0.20.1 ipv4.dns "1.1.1.1 1.0.0.1" ipv4.ignore-auto-dns yes ipv4.method manual
     ```
 
 - Passwordless SSH access between the machine running `ansible` and the `nodes`, if not you can supply arguments to provide credentials `--ask-pass --ask-become-pass` to each command.
