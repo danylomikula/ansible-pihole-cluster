@@ -47,7 +47,7 @@
 
 - name: Download PiHole
   ansible.builtin.unarchive:
-    src: https://github.com/pi-hole/pi-hole/archive/refs/tags/v{{ pihile_version }}.zip
+    src: https://github.com/pi-hole/pi-hole/archive/refs/tags/v{{ pihole_version }}.zip
     dest: /tmp
     remote_src: true
 
@@ -56,8 +56,8 @@
     {% if ansible_os_family == 'RedHat' %}
     export PIHOLE_SKIP_OS_CHECK=true
     {% endif %}
-    bash /tmp/pi-hole-{{ pihile_version }}/automated\ install/basic-install.sh --unattended
-    rm -rf /tmp/*{{ pihile_version }}*
+    bash /tmp/pi-hole-{{ pihole_version }}/automated\ install/basic-install.sh --unattended
+    rm -rf /tmp/*{{ pihole_version }}*
   register: process_status
   changed_when: false
 
