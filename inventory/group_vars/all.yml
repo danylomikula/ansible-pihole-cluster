@@ -18,7 +18,7 @@ enable_unbound: true
 unbound_verbosity: 0 # https://docs.pi-hole.net/guides/dns/unbound/#add-logging-to-unbound
 
 ## Pi-hole initial configuration setupVars.conf
-pihole_version: 5.18.1 # https://github.com/pi-hole/pi-hole/releases
+pihole_version: 5.18.2 # https://github.com/pi-hole/pi-hole/releases
 pihole_install_web_interface: "true"
 pihole_install_web_server: "true"
 pihole_lighthttpd_enabled: "true"
