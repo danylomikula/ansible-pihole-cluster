@@ -26,3 +26,12 @@ API_EXCLUDE_CLIENTS={{ pihole_api_exclude_clients }}
 {% if pihole_dns_cache_size is defined %}
 CACHE_SIZE={{ pihole_dns_cache_size }}
 {% endif %}
+DNSSEC={{ pihole_dnssec_enabled }}
+{% if pihole_rev_server %}
+REV_SERVER={{ pihole_rev_server|lower }}
+REV_SERVER_CIDR={{ pihole_rev_server_cidr }}
+REV_SERVER_TARGET={{ pihole_rev_server_target }}
+{% if pihole_rev_server_domain %}
+REV_SERVER_DOMAIN={{ pihole_rev_server_domain }}
+{% endif %}
+{% endif %}
