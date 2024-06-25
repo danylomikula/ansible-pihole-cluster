@@ -58,7 +58,7 @@
     src: https://github.com/pi-hole/pi-hole/archive/refs/tags/v{{ pihole_version }}.zip
     dest: /tmp
     remote_src: true
-  when: (pihole_version_installed | length == 0) or pihole_version_installed is version_compare(pihile_version, '<')
+  when: (pihole_version_installed | length == 0) or pihole_version_installed is version_compare(pihole_version, '<')
 
 - name: Install PiHole
   ansible.builtin.shell: |
@@ -69,12 +69,12 @@
     rm -rf /tmp/*{{ pihole_version }}*
   register: process_status
   changed_when: false
-  when: (pihole_version_installed | length == 0) or pihole_version_installed is version_compare(pihile_version, '<')
+  when: (pihole_version_installed | length == 0) or pihole_version_installed is version_compare(pihole_version, '<')
 
 - name: Display installation process
   ansible.builtin.debug:
     var: process_status.stdout_lines
-  when: (pihole_version_installed | length == 0) or pihole_version_installed is version_compare(pihile_version, '<')
+  when: (pihole_version_installed | length == 0) or pihole_version_installed is version_compare(pihole_version, '<')
 
 - name: Check if Pi-hole FTL service is running
   ansible.builtin.systemd:
