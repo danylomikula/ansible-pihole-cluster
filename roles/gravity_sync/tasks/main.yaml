@@ -2,13 +2,13 @@
   ansible.builtin.file:
     path: /etc/gravity-sync
     state: directory
-    mode: 0755
+    mode: "0755"
 
 - name: Create gravity-sync.conf
   ansible.builtin.template:
     dest: /etc/gravity-sync/gravity-sync.conf
     src: gravity-sync.conf.j2
-    mode: 0644
+    mode: "0644"
 
 - name: Install Gravity Sync
   ansible.builtin.shell: curl -sSL https://raw.githubusercontent.com/vmstan/gs-install/main/gs-install.sh | bash
@@ -24,6 +24,7 @@
   become_user: "{{ ansible_user }}"
   register: push_status
   when: inventory_hostname in groups['master']
+  changed_when: false
 
 - name: Display Gravity Sync PUSH process
   ansible.builtin.debug:
