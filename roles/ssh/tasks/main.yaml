@@ -12,7 +12,7 @@
     flat: true
 
 - name: Copy SSH keys between hosts
-  ansible.builtin.authorized_key:
+  ansible.posix.authorized_key:
     user: "{{ ansible_user }}"
     state: present
     key: "{{ lookup('file', 'buffer/{{ item }}-id_rsa.pub') }}"

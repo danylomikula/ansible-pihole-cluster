@@ -23,13 +23,13 @@
   ansible.builtin.copy:
     dest: /etc/keepalived/check_pihole.sh
     src: check_pihole.sh
-    mode: 0755
+    mode: "0755"
 
 - name: Configure keepalived
   ansible.builtin.template:
     dest: /etc/keepalived/keepalived.conf
     src: keepalived.conf.j2
-    mode: 0644
+    mode: "0644"
   notify: Restart keepalived service
 
 - name: Flush handlers
