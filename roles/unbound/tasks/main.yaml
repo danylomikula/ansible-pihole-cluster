@@ -12,7 +12,7 @@
   ansible.builtin.template:
     dest: /etc/unbound/unbound.conf
     src: pi-hole.conf.j2
-    mode: 0644
+    mode: "0644"
   notify: Restart unbound service
 
 - name: Flush handlers
@@ -22,13 +22,13 @@
   ansible.builtin.file:
     path: /etc/dnsmasq.d
     state: directory
-    mode: 0644
+    mode: "0644"
 
 - name: Create 99-edns.conf config
   ansible.builtin.copy:
     src: 99-edns.conf
     dest: /etc/dnsmasq.d/99-edns.conf
-    mode: 0644
+    mode: "0644"
   notify: Restart unbound service
 
 - name: Check if resolvconf.conf exists
