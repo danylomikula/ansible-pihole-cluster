@@ -30,7 +30,7 @@ Has been tested on:
     nmcli con mod "Wired connection 1" ipv4.addresses 10.0.20.50/24 ipv4.gateway 10.0.20.1 ipv4.dns "1.1.1.1 1.0.0.1" ipv4.ignore-auto-dns yes ipv4.method manual
     ```
 
-- Passwordless SSH access between the machine running `ansible` and the `nodes`, if not you can supply arguments to provide credentials `--ask-pass --ask-become-pass` to each command.
+- Passwordless SSH access between the machine running `ansible` and the `nodes`. If not, you can supply arguments to provide credentials `--ask-pass --ask-become-pass` to each command.
 
 - Ansible should be able to use sudo without a password.<br />
   > You may need to configure this on `Rocky Linux`.<br />
@@ -59,7 +59,7 @@ Has been tested on:
 - Point your DNS server settings to the virtual IP (`pihole_vip_ipv4`, `pihole_vip_ipv6`) that you set previously in `inventory/group_vars/all.yml`
 
 > [!NOTE]
-> You can run `bootstrap-pihole.yaml` playbook any time.<br />
+> You can run `bootstrap-pihole.yaml` playbook at any time.<br />
 > It will bootstrap a fresh Pi-hole installation with updates (statistics will not be deleted)
 
 ## ⚙️ Updates
