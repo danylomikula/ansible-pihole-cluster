@@ -2,6 +2,11 @@
   community.general.timezone:
     name: "{{ timezone }}"
 
+- name: Set SELinux to disabled state
+  ansible.posix.selinux:
+    state: disabled
+  when: ansible_os_family == "RedHat"
+
 - name: Install dependencies
   ansible.builtin.package:
     name:

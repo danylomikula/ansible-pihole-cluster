@@ -3,10 +3,10 @@
   become: true
   ignore_unreachable: false
   roles:
+    - role: updates
     - role: bootstrap
     - role: firewalld
       when: ansible_os_family == 'RedHat'
-    - role: updates
     - role: ssh
     - role: keepalived
     - role: unbound

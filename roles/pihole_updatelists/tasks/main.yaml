@@ -12,7 +12,7 @@
   ansible.builtin.template:
     dest: /etc/pihole-updatelists.conf
     src: pihole-updatelists.conf.j2
-    mode: 0755
+    mode: "0755"
 
 - name: Install pihole-updatelists
   ansible.builtin.shell: wget -O - https://raw.githubusercontent.com/jacklul/pihole-updatelists/master/install.sh | sudo bash
