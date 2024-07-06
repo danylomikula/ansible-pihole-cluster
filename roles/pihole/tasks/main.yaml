@@ -11,45 +11,71 @@
   ansible.builtin.file:
     path: /etc/pihole
     state: directory
-    mode: 0775
+    mode: "0775"
 
 - name: Ensures /etc/dnsmasq.d dir exists
   ansible.builtin.file:
     path: /etc/dnsmasq.d
     state: directory
-    mode: 0755
+    mode: "0755"
 
 - name: Create PiHole setupVars.conf
   ansible.builtin.template:
     dest: /etc/pihole/setupVars.conf
     src: setupVars.conf.j2
-    mode: 0644
+    mode: "0644"
 
 - name: Create PiHole pihole-FTL.conf
   ansible.builtin.template:
     dest: /etc/pihole/pihole-FTL.conf
     src: pihole-FTL.conf.j2
-    mode: 0644
+    mode: "0644"
 
 - name: Create PiHole DNS custom.list
   ansible.builtin.template:
     dest: /etc/pihole/custom.list
     src: dns-custom-list.list.j2
-    mode: 0644
+    mode: "0644"
   when: local_dns_records is defined
 
 - name: Create PiHole CNAME 05-pihole-custom-cname.conf
   ansible.builtin.template:
     dest: /etc/dnsmasq.d/05-pihole-custom-cname.conf
     src: cname-custom-list.conf.j2
-    mode: 0644
+    mode: "0644"
   when: local_cname_records is defined
+
+- name: Check if PiHole versions file exists
+  ansible.builtin.stat:
+    path: /etc/pihole/versions
+  register: versions_file_stat
+
+- name: Extract installed PiHole version
+  ansible.builtin.command: "grep '^CORE_VERSION=' /etc/pihole/versions"
+  register: core_version
+  when: versions_file_stat.stat.exists
+  changed_when: false
+
+- name: Set facts for PiHole version
+  ansible.builtin.set_fact:
+    pihole_version_installed: "{{ core_version.stdout.split('=')[1][1:] }}"
+  when: versions_file_stat.stat.exists
+
+- name: Set default PiHole version
+  ansible.builtin.set_fact:
+    pihole_version_installed: "0.0.0"
+  when: not versions_file_stat.stat.exists
+
+- name: Display PiHole version
+  ansible.builtin.debug:
+    msg: "CORE_VERSION is {{ pihole_version_installed }}"
 
 - name: Download PiHole
   ansible.builtin.unarchive:
     src: https://github.com/pi-hole/pi-hole/archive/refs/tags/v{{ pihole_version }}.zip
     dest: /tmp
     remote_src: true
+  when: pihole_version != pihole_version_installed
 
 - name: Install PiHole
   ansible.builtin.shell: |
@@ -60,10 +86,12 @@
     rm -rf /tmp/*{{ pihole_version }}*
   register: process_status
   changed_when: false
+  when: pihole_version != pihole_version_installed
 
 - name: Display installation process
   ansible.builtin.debug:
     var: process_status.stdout_lines
+  when: pihole_version != pihole_version_installed
 
 - name: Check if Pi-hole FTL service is running
   ansible.builtin.systemd:
