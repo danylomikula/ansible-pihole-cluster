@@ -18,18 +18,6 @@
     name: "{{ inventory_hostname }}"
   notify: Reboot after hostname change
 
-- name: Set hosts
-  ansible.builtin.blockinfile:
-    dest: /etc/hosts
-    content: |
-      {%- if enable_ipv6_support == true -%}
-      127.0.0.1       {{ inventory_hostname }}
-      ::1             {{ inventory_hostname }}
-      {%- else -%}
-      127.0.0.1       {{ inventory_hostname }}
-      {%- endif -%}
-  notify: Reboot after hostname change
-
 - name: Add IP address of all hosts to all hosts
   ansible.builtin.lineinfile:
     dest: /etc/hosts
