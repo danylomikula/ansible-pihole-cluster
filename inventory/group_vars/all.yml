@@ -18,7 +18,7 @@ enable_unbound: true
 unbound_verbosity: 0 # https://docs.pi-hole.net/guides/dns/unbound/#add-logging-to-unbound
 
 ## Pi-hole initial configuration setupVars.conf
-pihole_version: 5.18.2 # https://github.com/pi-hole/pi-hole/releases
+pihole_version: 5.18.3 # https://github.com/pi-hole/pi-hole/releases
 pihole_install_web_interface: "true"
 pihole_install_web_server: "true"
 pihole_lighthttpd_enabled: "true"
@@ -31,6 +31,11 @@ pihole_dns_2: "1.0.0.1" # This setting will be ignored when enable_unbound is se
 pihole_fqdn_required: "true"
 pihole_bogus_priv: "true"
 pihole_dns_cache_size: "10000" # https://docs.pi-hole.net/ftldns/dns-cache/
+pihole_dnssec_enabled: "false" # Enable DNSSEC support
+pihole_rev_server: false # Enable DNS conditional forwarding for device name resolution
+pihole_rev_server_domain: "homelab.local" # If conditional forwarding is enabled, set the domain of the local network router
+pihole_rev_server_target: "10.0.20.1" # If conditional forwarding is enabled, set the IP of the local network router
+pihole_rev_server_cidr: "10.0.20.0/24" # If conditional forwarding is enabled, set the reverse DNS zone (e.g. 192.168.0.0/24)
 
 ## Pi-hole general configuration pihole-FTL.conf
 ## https://docs.pi-hole.net/ftldns/configfile/
