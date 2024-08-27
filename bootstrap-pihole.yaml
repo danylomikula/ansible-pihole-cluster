@@ -6,7 +6,7 @@
     - role: updates
     - role: bootstrap
     - role: firewalld
-      when: ansible_os_family == 'RedHat'
+      when: ansible_os_family == 'RedHat' and 'firewalld.service' in ansible_facts.services
     - role: ssh
     - role: keepalived
     - role: unbound
