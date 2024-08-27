@@ -104,3 +104,7 @@
 - name: Set Pi-hole FTL WEB password
   ansible.builtin.command: pihole -a -p {{ pihole_webpassword }}
   changed_when: false
+
+- name: Restart Pi-hole DNS
+  ansible.builtin.command: pihole restartdns
+  changed_when: false
