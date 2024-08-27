@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.0](https://github.com/danylomikula/ansible-pihole-cluster/compare/v1.0.0...v1.1.0) (2024-08-27)
+
+### Features
+
+* Restart DNS after Pi-hole installation ([#10](https://github.com/danylomikula/ansible-pihole-cluster/issues/10)) ([b1619fa](https://github.com/danylomikula/ansible-pihole-cluster/commit/b1619faebd16250b83816b858b51dadddcefff6d))
+
 ## 1.0.0 (2024-08-26)
 
 ### Features
