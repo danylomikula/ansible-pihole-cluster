@@ -35,5 +35,8 @@
     state: disabled
   when: ansible_os_family == "RedHat"
 
+- name: Populate service facts
+  ansible.builtin.service_facts:
+
 - name: Flush handlers
   ansible.builtin.meta: flush_handlers
