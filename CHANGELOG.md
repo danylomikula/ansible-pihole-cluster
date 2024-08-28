@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.0](https://github.com/danylomikula/ansible-pihole-cluster/compare/v1.1.0...v1.2.0) (2024-08-28)
+
+### Features
+
+* Create firewalld rules only if service is installed ([#12](https://github.com/danylomikula/ansible-pihole-cluster/issues/12)) ([a87b715](https://github.com/danylomikula/ansible-pihole-cluster/commit/a87b715ff5f2aaa71e79ebb2752928518773936f))
+
 ## [1.1.0](https://github.com/danylomikula/ansible-pihole-cluster/compare/v1.0.0...v1.1.0) (2024-08-27)
 
 ### Features
