@@ -1,0 +1,29 @@
+namespace: danylomikula
+name: ansible_pihole_cluster
+version: 1.2.0
+readme: README.md
+description: >
+  The easiest way to bootstrap a robust Pi-hole Highly Available cluster
+  using Ansible with Keepalived for failover management, Gravity Sync for 
+  nodes synchronization, and Unbound as a recursive DNS server for higher privacy.
+authors:
+  - Danylo Mikula <dan@mikula.dev> (https://github.com/danylomikula)
+dependencies:
+  community.crypto: '*'
+  community.general: '*'
+  ansible.posix: '*'
+license:
+  - Apache-2.0
+license_file: LICENSE
+tags:
+  - pihole
+  - pi-hole
+  - high-availability
+  - unbound
+  - gravity-sync
+repository: https://github.com/danylomikula/ansible-pihole-cluster
+documentation: https://github.com/danylomikula/ansible-pihole-cluster
+homepage: https://github.com/danylomikula/ansible-pihole-cluster
+issues: https://github.com/danylomikula/ansible-pihole-cluster/issues
+build_ignore:
+  - .*

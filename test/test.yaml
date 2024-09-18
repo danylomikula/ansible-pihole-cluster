@@ -1,0 +1,8 @@
+- name: Update Pi-Hole
+  collections:
+    - danylomikula.ansible_pihole_cluster
+  tasks:
+    - name: Update Pi-Hole 
+      ansible.builtin.import_playbook: danylomikula.ansible_pihole_cluster.Update
+      vars:
+        pihole_version: 5.18.3
