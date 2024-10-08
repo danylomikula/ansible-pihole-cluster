@@ -40,7 +40,7 @@ Has been tested on:
     ```
 
 ## 🚀 Getting Started
-- Install collections that this playbook uses by running<br /> `ansible-galaxy collection install -r ./collections/requirements.yml`
+- Install collections that this playbook uses by running<br /> `ansible-galaxy collection install -r ./collections/requirements.yaml`
 
 - Edit the `inventory/hosts.ini` file with IP addresses, hostnames and paths to your SSH keys for each node.
   ```bash
