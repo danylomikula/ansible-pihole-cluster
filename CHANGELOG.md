@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.0](https://github.com/danylomikula/ansible-pihole-cluster/compare/v1.2.0...v1.3.0) (2025-01-11)
+
+### Features
+
+* Upgrade Pi-hole to 5.18.4; update README ([#14](https://github.com/danylomikula/ansible-pihole-cluster/issues/14)) ([4c99e05](https://github.com/danylomikula/ansible-pihole-cluster/commit/4c99e058dd7c64ad3e45323c5c71bf21eea9c02b))
+
 ## [1.2.0](https://github.com/danylomikula/ansible-pihole-cluster/compare/v1.1.0...v1.2.0) (2024-08-28)
 
 ### Features
