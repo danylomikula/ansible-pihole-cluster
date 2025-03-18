@@ -70,20 +70,6 @@
     mode: "0644"
   when: not custom_pihole_config.stat.exists
 
-- name: Create PiHole DNS custom.list
-  ansible.builtin.template:
-    dest: /etc/pihole/custom.list
-    src: dns-custom-list.list.j2
-    mode: "0644"
-  when: local_dns_records is defined
-
-- name: Create PiHole CNAME 05-pihole-custom-cname.conf
-  ansible.builtin.template:
-    dest: /etc/dnsmasq.d/05-pihole-custom-cname.conf
-    src: cname-custom-list.conf.j2
-    mode: "0644"
-  when: local_cname_records is defined
-
 - name: Check if PiHole versions file exists
   ansible.builtin.stat:
     path: /etc/pihole/versions

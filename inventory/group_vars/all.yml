@@ -27,32 +27,45 @@ unbound_verbosity: 0 # https://docs.pi-hole.net/guides/dns/unbound/#add-logging-
 pihole_version: 6.0.5 # https://github.com/pi-hole/pi-hole/releases
 pihole_webpassword: "SUPER_SECURE_PASSWORD" # Web interface password set via `pihole -a -p`; stored as a hash in `pihole.toml`.
 pihole_local_domain: "homelab.local" # Options: "lan", "local", "home", or a custom domain (e.g., "homelab.local").
-pihole_web_domain: "{{ ansible_hostname }}.{{ pihole_local_domain }}" # Sets the Pi-hole web interface domain using the system hostname and local domain (e.g., "pihole-node1.lan").  
+pihole_web_domain: "{{ ansible_hostname }}.{{ pihole_local_domain }}" # Sets the Pi-hole web interface domain using the system hostname and local domain (e.g., "pihole-node1.lan"). 
+pihole_web_acl: "" # Comma-separated list of “+/-subnets” restricting webserver access; empty means allow all. E.g. "+127.0.0.1,+[::1]" denies all except 127.0.0.1 and ::1; "+192.168.0.0/16" allows that subnet only; "+[::]/0" only IPv6.
 pihole_web_port: "80o,443os,[::]:80o,[::]:443os" # Defines web interface ports: HTTP (80), HTTPS (443), with IPv4/IPv6 support and optional fallback if ports are in use.
+pihole_web_session_timeout: 1800 # Session timeout in seconds for the Pi-hole web interface (default 1800 = 30 minutes).
+pihole_web_boxed_layout: true # If true, the Pi-hole web interface uses a "boxed" layout.
+pihole_web_theme: "default-auto" # Web interface theme pihole_web_theme: "default-auto". One of: "default-auto", "default-light", "default-dark", "default-darker", "high-contrast", "high-contrast-dark", "lcars".
 pihole_privacy_level: "0" # Controls query logging and data visibility: 0 = full logging, 1 = hide domains, 2 = hide domains & clients, 3 = anonymize everything.
 pihole_interface: "eth0" # Interface to use for DNS.
 pihole_query_logging: "true" # Log DNS queries and replies to pihole.log.
 pihole_socket_listening: "ALL" # defines how Pi-hole responds to DNS queries: "LOCAL" (only local networks), "SINGLE" (only on the specified interface), "BIND" (binds only to specified interfaces), "ALL" (responds to all queries, risky), "NONE" (no configuration added, manual setup required).
 pihole_dns_1: "1.1.1.1" # This setting will be ignored when enable_unbound is set to true.
 pihole_dns_2: "1.0.0.1" # This setting will be ignored when enable_unbound is set to true.
-pihole_fqdn_required: "true" # If true, Pi-hole blocks single-label queries (without dots) and does not forward them upstream.
-pihole_bogus_priv: "true" # If true, Pi-hole blocks reverse DNS lookups for private IP ranges, preventing leaks to upstream DNS.
-pihole_dns_cache_size: 10000 # # Sets the DNS cache size; higher values improve caching but increase memory usage. Default recommended: 10000.
+pihole_cname_deep_inspect: "true" # Enables deep CNAME inspection; may increase CPU usage on low-end devices.
+pihole_block_esni: "true" # Blocks _esni. subdomains to prevent ESNI-based encrypted SNI tracking.
+pihole_edns0_ecs: "true"  # Enables EDNS0 client subnet (ECS) support for retrieving client IPs behind NAT.
 pihole_ignore_localhost: "false" # If true, Pi-hole ignores and does not log queries from localhost (127.0.0.1 and ::1).
-pihole_show_dnssec: "false" # Enable DNSSEC logging and statistics.
+pihole_domain_needed: "false" # If "true", single-label (dotless) queries are blocked; "false" forwards them upstream.
+pihole_bogus_priv: "true" # If "true", reverse lookups for private IPs return NXDOMAIN instead of forwarding.
+pihole_dns_cache_size: 10000 # # Sets the DNS cache size; higher values improve caching but increase memory usage. Default recommended: 10000.
+pihole_dnssec: "false" # Validate DNS replies using DNSSEC?
+pihole_show_dnssec: "true" # Enable DNSSEC logging and statistics.
 pihole_refresh_names: "IPV4_ONLY"  # Controls PTR query refresh: "IPV4_ONLY" (IPv4 only, recommended), "ALL" (IPv4 & IPv6), "UNKNOWN" (resolve once), "NONE" (disable).
-pihole_rev_server: true # Enable DNS conditional forwarding for device name resolution.
-pihole_rev_server_domain: "homelab.local" # If conditional forwarding is enabled, set the domain of the local network router.
-pihole_rev_server_target: "10.0.20.1" # If conditional forwarding is enabled, set the IP of the local network router.
-pihole_rev_server_cidr: "10.0.20.0/24" # If conditional forwarding is enabled, set the reverse DNS zone (e.g. 192.168.0.0/24).
-pihole_rate_limit_count: "1000" # Maximum number of DNS queries allowed per client within the rate-limiting interval before being temporarily blocked.
-pihole_rate_limit_interval: "60" # Time interval (in seconds) for rate limiting; clients exceeding the query limit within this period will be temporarily blocked.
+pihole_rate_limit_count: 1000 # Maximum number of DNS queries allowed per client within the rate-limiting interval before being temporarily blocked.
+pihole_rate_limit_interval: 60 # Time interval (in seconds) for rate limiting; clients exceeding the query limit within this period will be temporarily blocked.
 pihole_reply_when_busy: "DROP" # Defines how Pi-hole responds when the gravity database is unavailable: "BLOCK", "ALLOW", "REFUSE", or "DROP".
 pihole_block_mozilla_canary: "true" # Blocks Firefox from automatically enabling DNS-over-HTTPS (DoH).
 pihole_block_icloud_pr: "true" # If true, Pi-hole blocks Apple's iCloud Private Relay domains to prevent bypassing network filtering.
 pihole_ptr: "HOSTNAMEFQDN" # Defines the response for PTR queries to local interface addresses: "NONE", "HOSTNAME", "HOSTNAMEFQDN", or "PI.HOLE".
 pihole_max_db_days: 91 # Number of days to store DNS query history in the database (default: 91).
 pihole_db_interval: 60 # Time interval (in seconds) for writing queries to the database (default: 60).
+pihole_rev_servers: [] # Optional list of CIDRs, targets, and domains for DNS conditional forwarding.
+# Example usage:
+# pihole_rev_servers:
+#   - cidr: "10.0.20.0/24"
+#     target: "10.0.20.1"
+#     domain: "homelab.local"
+#   - cidr: "10.0.30.0/24"
+#     target: "10.0.30.1"
+#     domain: "another.local"
 
 ## pihole-updatelists Settings
 ## https://github.com/jacklul/pihole-updatelists
@@ -65,11 +78,12 @@ pihole_updatelists_allowlists_url: "" # Remote list URL containing list of allow
 pihole_updatelists_regex_blacklist_url: "https://raw.githubusercontent.com/mmotti/pihole-regex/master/regex.list" # https://github.com/mmotti/pihole-regex # Remote list URL containing regex rules for blacklisting.
 pihole_updatelists_regex_whitelist_url: "https://raw.githubusercontent.com/mmotti/pihole-regex/master/whitelist.list" # https://github.com/mmotti/pihole-regex # Remote list URL containing regex rules for whitelisting.
 
-## Pi-hole custom DNS records
+# # Pi-hole custom DNS records (host entries)
 # local_dns_records: |
 #   10.0.20.88 node.homelab.local
 #   10.0.20.96 nas.homelab.local
 
-## Pi-hole custom CNAME records
+# # Pi-hole custom CNAME records
 # local_cname_records: |
-#   cname=node.homelab.local,webserver.homelab.local
+#   node.homelab.local,webserver.homelab.local
+#   cname.example.com,somehost.example.com,300

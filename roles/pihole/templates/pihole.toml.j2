@@ -7,21 +7,35 @@
     "{{ pihole_dns_2 }}"
 {% endif %}
   ]
-  blockESNI = true
-  EDNS0ECS = true
+  CNAMEdeepInspect = {{ pihole_cname_deep_inspect | lower }}
+  blockESNI = {{ pihole_block_esni | lower }}
+  EDNS0ECS = {{ pihole_edns0_ecs | lower }}
   ignoreLocalhost = {{ pihole_ignore_localhost | lower }}
   showDNSSEC = {{ pihole_show_dnssec | lower }}
   piholePTR = "{{ pihole_ptr }}"
   replyWhenBusy = "{{ pihole_reply_when_busy }}"
-  bogusPriv = {{ pihole_bogus_priv | lower }}
-  queryLogging = {{ pihole_query_logging | lower }}
-  interface = "{{ pihole_interface | lower }}"
+  hosts = [
+{% for line in (local_dns_records | default('')).split('\n') if line.strip() %}
+    "{{ line.strip() }}"{% if not loop.last %},{% endif %}
+{% endfor %}
+  ]
+  domainNeeded = {{ pihole_domain_needed | lower }}
   domain = "{{ pihole_local_domain | lower }}"
+  bogusPriv = {{ pihole_bogus_priv | lower }}
+  dnssec = {{ pihole_dnssec | lower }}
+  interface = "{{ pihole_interface | lower }}"
   listeningMode = "{{ pihole_socket_listening }}"
-  domainNeeded = {{ pihole_fqdn_required | lower }}
-{% if pihole_rev_server %}
+  queryLogging = {{ pihole_query_logging | lower }}
+  cnameRecords = [
+{% for line in (local_cname_records | default('')).split('\n') if line.strip() %}
+    "{{ line.strip() }}"{% if not loop.last %},{% endif %}
+{% endfor %}
+  ]
+{% if pihole_rev_servers is defined and pihole_rev_servers|length > 0 %}
   revServers = [
-    "true,{{ pihole_rev_server_cidr }},{{ pihole_rev_server_target }}{% if pihole_rev_server_domain %},{{ pihole_rev_server_domain }}{% endif %}"
+{% for rs in pihole_rev_servers %}
+    "true,{{ rs.cidr }},{{ rs.target }}{% if rs.domain %},{{ rs.domain }}{% endif %}"{% if not loop.last %},{% endif %}
+{% endfor %}
   ]
 {% endif %}
 
@@ -44,10 +58,6 @@
     count = {{ pihole_rate_limit_count }}
     interval = {{ pihole_rate_limit_interval }}
 
-[webserver]
-  port = "{{ pihole_web_port }}"
-  domain = "{{ pihole_web_domain }}"
-
 [dhcp]
   active = false
 
@@ -57,6 +67,18 @@
 [database]
   maxDBdays = {{ pihole_max_db_days }}
   DBinterval = {{ pihole_db_interval }}
+
+[webserver]
+  domain = "{{ pihole_web_domain }}"
+  acl = "{{ pihole_web_acl }}"
+  port = "{{ pihole_web_port }}"
+
+  [webserver.session]
+    timeout = {{ pihole_web_session_timeout }}
+
+  [webserver.interface]
+    boxed = {{ pihole_web_boxed_layout }}
+    theme = "{{ pihole_web_theme }}"
 
 [misc]
   privacylevel = {{ pihole_privacy_level }}
