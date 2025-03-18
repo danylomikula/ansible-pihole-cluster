@@ -1,13 +1,19 @@
-{% if pihole_updatelists_adlists_url is defined %}
-ADLISTS_URL="{{ pihole_updatelists_adlists_url }}"
+{% if pihole_updatelists_blocklists_url | length > 0 %}
+BLOCKLISTS_URL="{{ pihole_updatelists_blocklists_url }}"
 {% endif %}
-{% if pihole_updatelists_whitelist_url is defined %}
+{% if pihole_updatelists_blacklist_url | length > 0 %}
+BLACKLIST_URL="{{ pihole_updatelists_blacklist_url }}"
+{% endif %}
+{% if pihole_updatelists_whitelist_url | length > 0 %}
 WHITELIST_URL="{{ pihole_updatelists_whitelist_url }}"
 {% endif %}
-{% if pihole_updatelists_regex_blacklist_url is defined %}
+{% if pihole_updatelists_allowlists_url | length > 0 %}
+ALLOWLISTS_URL="{{ pihole_updatelists_allowlists_url }}"
+{% endif %}
+{% if pihole_updatelists_regex_blacklist_url | length > 0 %}
 REGEX_BLACKLIST_URL="{{ pihole_updatelists_regex_blacklist_url }}"
 {% endif %}
-{% if pihole_updatelists_regex_whitelist_url is defined %}
+{% if pihole_updatelists_regex_whitelist_url | length > 0 %}
 REGEX_WHITELIST_URL="{{ pihole_updatelists_regex_whitelist_url }}"
 {% endif %}
 UPDATE_GRAVITY=false

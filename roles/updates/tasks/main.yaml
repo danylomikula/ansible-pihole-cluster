@@ -5,19 +5,19 @@
     autoremove: true
     update_cache: true
     upgrade: dist
-  when: ansible_os_family == 'Debian'
+  when: ansible_os_family == "Debian"
 
 - name: Check if reboot is needed [Debian]
   ansible.builtin.stat:
     path: /var/run/reboot-required
   register: reboot_required
-  when: ansible_os_family == 'Debian'
+  when: ansible_os_family == "Debian"
 
 - name: Reboot [Debian]
   ansible.builtin.reboot:
     msg: "Rebooting machine in 5 seconds"
   when:
-    - ansible_os_family == 'Debian'
+    - ansible_os_family == "Debian"
     - reboot_required.stat.exists
 
 - name: Update packages [RedHat]
@@ -26,11 +26,10 @@
     state: latest
     update_only: true
     update_cache: true
-  when: ansible_os_family == 'RedHat'
+  when: ansible_os_family == "RedHat"
 
 - name: Reboot [RedHat]
   ansible.builtin.reboot:
     msg: "Rebooting machine in 5 seconds"
   become: true
-  when:
-    - ansible_os_family == 'RedHat'
+  when: ansible_os_family == "RedHat"

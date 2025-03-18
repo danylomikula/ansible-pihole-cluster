@@ -19,17 +19,56 @@
     state: directory
     mode: "0755"
 
-- name: Create PiHole setupVars.conf
-  ansible.builtin.template:
-    dest: /etc/pihole/setupVars.conf
-    src: setupVars.conf.j2
-    mode: "0644"
+- name: Check if /etc/systemd/resolved.conf exists
+  ansible.builtin.stat:
+    path: /etc/systemd/resolved.conf
+  register: resolved_conf_status
 
-- name: Create PiHole pihole-FTL.conf
-  ansible.builtin.template:
-    dest: /etc/pihole/pihole-FTL.conf
-    src: pihole-FTL.conf.j2
+- name: Ensure DNSStubListener=no in /etc/systemd/resolved.conf
+  ansible.builtin.lineinfile:
+    path: /etc/systemd/resolved.conf
+    regexp: '^DNSStubListener='
+    line: 'DNSStubListener=no'
+    state: present
+  when: resolved_conf_status.stat.exists
+
+- name: Restart systemd-resolved
+  ansible.builtin.systemd:
+    name: systemd-resolved
+    state: restarted
+  when: resolved_conf_status.stat.exists
+
+- name: Remove /etc/resolv.conf
+  ansible.builtin.file:
+    path: /etc/resolv.conf
+    state: absent
+  when: resolved_conf_status.stat.exists
+
+- name: Symlink /run/systemd/resolve/resolv.conf to /etc/resolv.conf
+  ansible.builtin.file:
+    src: /run/systemd/resolve/resolv.conf
+    dest: /etc/resolv.conf
+    state: link
+  when: resolved_conf_status.stat.exists
+
+- name: Check if a custom pihole.toml exists in the Ansible root directory
+  ansible.builtin.stat:
+    path: "{{ playbook_dir }}/custom-pihole.toml"
+  register: custom_pihole_config
+
+- name: Use custom pihole.toml if available
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/custom-pihole.toml"
+    dest: /etc/pihole/pihole.toml
     mode: "0644"
+  when: custom_pihole_config.stat.exists
+
+- name: Generate pihole.toml from template if no custom file is found
+  ansible.builtin.template:
+    src: pihole.toml.j2
+    dest: /etc/pihole/pihole.toml
+    mode: "0644"
+  when: not custom_pihole_config.stat.exists
 
 - name: Create PiHole DNS custom.list
   ansible.builtin.template:
@@ -79,7 +118,7 @@
 
 - name: Install PiHole
   ansible.builtin.shell: |
-    {% if ansible_os_family == 'RedHat' %}
+    {% if ansible_os_family == "RedHat" %}
     export PIHOLE_SKIP_OS_CHECK=true
     {% endif %}
     bash /tmp/pi-hole-{{ pihole_version }}/automated\ install/basic-install.sh --unattended
@@ -102,9 +141,10 @@
   until: pihole_ftl_status.status.ActiveState == 'active'
 
 - name: Set Pi-hole FTL WEB password
-  ansible.builtin.command: pihole -a -p {{ pihole_webpassword }}
+  ansible.builtin.command: pihole setpassword {{ pihole_webpassword }}
   changed_when: false
 
-- name: Restart Pi-hole DNS
-  ansible.builtin.command: pihole restartdns
-  changed_when: false
+- name: Restart pihole-FTL service
+  ansible.builtin.systemd:
+    name: pihole-FTL
+    state: restarted

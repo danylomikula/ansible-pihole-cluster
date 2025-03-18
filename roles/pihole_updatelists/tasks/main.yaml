@@ -15,7 +15,10 @@
     mode: "0755"
 
 - name: Install pihole-updatelists
-  ansible.builtin.shell: wget -O - https://raw.githubusercontent.com/jacklul/pihole-updatelists/master/install.sh | sudo bash
+  ansible.builtin.shell: "wget -O - https://raw.githubusercontent.com/jacklul/pihole-updatelists/master/install.sh | bash"
+  become_flags: '-E'
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
   register: install_status
   changed_when: false
 
@@ -28,7 +31,7 @@
     path: /usr/local/sbin/pihole-updatelists
     regexp: "(^ {8}print 'root privileges required' \\. PHP_EOL;\\n^ {8}exit\\(1\\);)"
     replace: "        print ' ';"
-  when: ansible_os_family == 'RedHat'
+  when: ansible_os_family == "RedHat"
 
 - name: Update lists
   ansible.builtin.command: /usr/local/sbin/pihole-updatelists

@@ -1,0 +1,62 @@
+[dns]
+  upstreams = [
+{% if enable_unbound == true %}
+    "127.0.0.1#5335"
+{% else %}
+    "{{ pihole_dns_1 }}",
+    "{{ pihole_dns_2 }}"
+{% endif %}
+  ]
+  blockESNI = true
+  EDNS0ECS = true
+  ignoreLocalhost = {{ pihole_ignore_localhost | lower }}
+  showDNSSEC = {{ pihole_show_dnssec | lower }}
+  piholePTR = "{{ pihole_ptr }}"
+  replyWhenBusy = "{{ pihole_reply_when_busy }}"
+  bogusPriv = {{ pihole_bogus_priv | lower }}
+  queryLogging = {{ pihole_query_logging | lower }}
+  interface = "{{ pihole_interface | lower }}"
+  domain = "{{ pihole_local_domain | lower }}"
+  listeningMode = "{{ pihole_socket_listening }}"
+  domainNeeded = {{ pihole_fqdn_required | lower }}
+{% if pihole_rev_server %}
+  revServers = [
+    "true,{{ pihole_rev_server_cidr }},{{ pihole_rev_server_target }}{% if pihole_rev_server_domain %},{{ pihole_rev_server_domain }}{% endif %}"
+  ]
+{% endif %}
+
+  [dns.cache]
+    size = {{ pihole_dns_cache_size }}
+
+  [dns.specialDomains]
+    mozillaCanary = {{ pihole_block_mozilla_canary | lower }}
+    iCloudPrivateRelay = {{ pihole_block_icloud_pr | lower }}
+
+  [dns.reply.host]
+{% if enable_ipv6_support == true %}
+    IPv4 = "{{ pihole_vip_ipv4 }}"
+    IPv6 = "{{ pihole_vip_ipv6 }}"
+{% else %}
+    IPv4 = "{{ pihole_vip_ipv4 }}"
+{% endif %}
+
+  [dns.rateLimit]
+    count = {{ pihole_rate_limit_count }}
+    interval = {{ pihole_rate_limit_interval }}
+
+[webserver]
+  port = "{{ pihole_web_port }}"
+  domain = "{{ pihole_web_domain }}"
+
+[dhcp]
+  active = false
+
+[resolver]
+  refreshNames = "{{ pihole_refresh_names }}"
+
+[database]
+  maxDBdays = {{ pihole_max_db_days }}
+  DBinterval = {{ pihole_db_interval }}
+
+[misc]
+  privacylevel = {{ pihole_privacy_level }}
