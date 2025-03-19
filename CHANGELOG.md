@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.0](https://github.com/danylomikula/ansible-pihole-cluster/compare/v1.3.0...v2.0.0) (2025-03-19)
+
+### ⚠ BREAKING CHANGES
+
+* Pi-hole v6 Support (#16)
+
+### Features
+
+* Pi-hole v6 Support ([#16](https://github.com/danylomikula/ansible-pihole-cluster/issues/16)) ([f868590](https://github.com/danylomikula/ansible-pihole-cluster/commit/f8685904147ca332ad91bcf87aa958f7b834c8dc))
+
 ## [1.3.0](https://github.com/danylomikula/ansible-pihole-cluster/compare/v1.2.0...v1.3.0) (2025-01-11)
 
 ### Features
