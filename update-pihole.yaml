@@ -3,6 +3,8 @@
   become: true
   serial: 1
   ignore_unreachable: false
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
   roles:
     - updates
     - pihole

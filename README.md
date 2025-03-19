@@ -1,5 +1,5 @@
 <div align="center">
-  <h2 align="center"><strong>Pi-hole HA cluster with Keepalived, Gravity-Sync, and Unbound</strong></h2>
+  <h2 align="center"><strong>Pi-hole HA cluster with Keepalived, Nebula Sync, and Unbound</strong></h2>
   <h1 align="center">
     <picture>
       <img src=".github/logo.png" height="256" width="256" alt="pi-hole HA cluster project logo" />
@@ -10,14 +10,16 @@
 ## 📖 General Information
 This Ansible playbook will allow you to bootstrap a Highly Available Pi-hole cluster with:
 - [x] [keepalived](https://github.com/acassen/keepalived)
-- [x] [Gravity Sync](https://github.com/vmstan/gravity-sync)
+- [x] [Nebula Sync](https://github.com/lovelaze/nebula-sync)
 - [x] [unbound](https://github.com/NLnetLabs/unbound)
+- [x] [pihole-updatelists](https://github.com/jacklul/pihole-updatelists)
 
 Has been tested on:
-- [x] Debian - version 12 (bookworm)
+- [x] Debian - version 12 (Bookworm)
 - [x] Ubuntu - version 22.04 (Jammy Jellyfish)
-- [x] Ubuntu - version 23.10 (Mantic Minotaur)
-- [x] Rocky - version 9.4
+- [x] Ubuntu - version 24.04 (Noble Numbat)
+- [x] Ubuntu - version 24.10 (Oracular Oriole)
+- [x] Rocky - version 9.5
 
 ## ✅ Requirements
 - Ansible 2.14+
@@ -61,6 +63,17 @@ Has been tested on:
 > [!NOTE]
 > You can run `bootstrap-pihole.yaml` playbook at any time.<br />
 > It will bootstrap a fresh Pi-hole installation with updates (statistics will not be deleted)
+
+### 📌 Custom `pihole.toml` Support
+
+This playbook allows you to **override the default `pihole.toml` configuration** with your own custom file.  
+By default, Ansible will generate `pihole.toml` using the `pihole.toml.j2` template **based on the parameters and variables set in `group_vars` under the Pi-hole general configuration**.  
+However, if you place a file named `custom-pihole.toml` in the **root directory of the Ansible project**, the playbook will automatically detect and use it instead.
+
+#### **How It Works**
+1. The playbook **checks** if `custom-pihole.toml` exists in the Ansible root directory.
+2. If found, it **copies** the custom file to `/etc/pihole/pihole.toml`, replacing the default template.
+3. If no custom file is found, the playbook **generates** `pihole.toml` from the Jinja2 template (`pihole.toml.j2`) **using values from `inventory/group_vars/all.yml` and other relevant configuration files**.
 
 ## ⚙️ Updates
 To quickly update system or change settings you can run `update-pihole.yaml` playbook<br />

@@ -1,0 +1,85 @@
+[dns]
+  upstreams = [
+{% if enable_unbound %}
+    "127.0.0.1#5335"
+{% else %}
+{% for dns_server in pihole_upstream_dns %}
+    "{{ dns_server }}"{% if not loop.last %},{% endif %}
+{% endfor %}
+{% endif %}
+  ]
+  CNAMEdeepInspect = {{ pihole_cname_deep_inspect | lower }}
+  blockESNI = {{ pihole_block_esni | lower }}
+  EDNS0ECS = {{ pihole_edns0_ecs | lower }}
+  ignoreLocalhost = {{ pihole_ignore_localhost | lower }}
+  showDNSSEC = {{ pihole_show_dnssec | lower }}
+  piholePTR = "{{ pihole_ptr }}"
+  replyWhenBusy = "{{ pihole_reply_when_busy }}"
+  hosts = [
+{% for line in (local_dns_records | default('')).split('\n') if line.strip() %}
+    "{{ line.strip() }}"{% if not loop.last %},{% endif %}
+{% endfor %}
+  ]
+  domainNeeded = {{ pihole_domain_needed | lower }}
+  domain = "{{ pihole_local_domain | lower }}"
+  bogusPriv = {{ pihole_bogus_priv | lower }}
+  dnssec = {{ pihole_dnssec | lower }}
+  interface = "{{ pihole_interface | lower }}"
+  listeningMode = "{{ pihole_socket_listening }}"
+  queryLogging = {{ pihole_query_logging | lower }}
+  cnameRecords = [
+{% for line in (local_cname_records | default('')).split('\n') if line.strip() %}
+    "{{ line.strip() }}"{% if not loop.last %},{% endif %}
+{% endfor %}
+  ]
+{% if pihole_rev_servers is defined and pihole_rev_servers|length > 0 %}
+  revServers = [
+{% for rs in pihole_rev_servers %}
+    "true,{{ rs.cidr }},{{ rs.target }}{% if rs.domain %},{{ rs.domain }}{% endif %}"{% if not loop.last %},{% endif %}
+{% endfor %}
+  ]
+{% endif %}
+
+  [dns.cache]
+    size = {{ pihole_dns_cache_size }}
+
+  [dns.specialDomains]
+    mozillaCanary = {{ pihole_block_mozilla_canary | lower }}
+    iCloudPrivateRelay = {{ pihole_block_icloud_pr | lower }}
+
+  [dns.reply.host]
+{% if enable_ipv6_support == true %}
+    IPv4 = "{{ pihole_vip_ipv4 }}"
+    IPv6 = "{{ pihole_vip_ipv6 }}"
+{% else %}
+    IPv4 = "{{ pihole_vip_ipv4 }}"
+{% endif %}
+
+  [dns.rateLimit]
+    count = {{ pihole_rate_limit_count }}
+    interval = {{ pihole_rate_limit_interval }}
+
+[dhcp]
+  active = false
+
+[resolver]
+  refreshNames = "{{ pihole_refresh_names }}"
+
+[database]
+  maxDBdays = {{ pihole_max_db_days }}
+  DBinterval = {{ pihole_db_interval }}
+
+[webserver]
+  domain = "{{ pihole_web_domain }}"
+  acl = "{{ pihole_web_acl }}"
+  port = "{{ pihole_web_port }}"
+
+  [webserver.session]
+    timeout = {{ pihole_web_session_timeout }}
+
+  [webserver.interface]
+    boxed = {{ pihole_web_boxed_layout }}
+    theme = "{{ pihole_web_theme }}"
+
+[misc]
+  privacylevel = {{ pihole_privacy_level }}
