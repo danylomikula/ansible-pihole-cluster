@@ -1,10 +1,11 @@
 [dns]
   upstreams = [
-{% if enable_unbound == true %}
+{% if enable_unbound %}
     "127.0.0.1#5335"
 {% else %}
-    "{{ pihole_dns_1 }}",
-    "{{ pihole_dns_2 }}"
+{% for dns_server in pihole_upstream_dns %}
+    "{{ dns_server }}"{% if not loop.last %},{% endif %}
+{% endfor %}
 {% endif %}
   ]
   CNAMEdeepInspect = {{ pihole_cname_deep_inspect | lower }}

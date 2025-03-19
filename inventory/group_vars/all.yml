@@ -12,10 +12,10 @@ pihole_vip_ipv6: "fe80::53/64" # Floating (virtual) IPv6 for the failover betwee
 enable_nebula_sync: true
 nebula_sync_version: "v0.6.0" # https://github.com/lovelaze/nebula-sync/pkgs/container/nebula-sync
 nebula_sync_cron: "*/30 * * * *" # https://github.com/lovelaze/nebula-sync?tab=readme-ov-file#optional-environment-variables
-nebula_sync_client_skip_tls_verification: "true" # https://github.com/lovelaze/nebula-sync?tab=readme-ov-file#optional-environment-variables
-nebula_sync_run_gravity: "true" # https://github.com/lovelaze/nebula-sync?tab=readme-ov-file#optional-environment-variables
+nebula_sync_client_skip_tls_verification: true # https://github.com/lovelaze/nebula-sync?tab=readme-ov-file#optional-environment-variables
+nebula_sync_run_gravity: true # https://github.com/lovelaze/nebula-sync?tab=readme-ov-file#optional-environment-variables
 # Nebula Sync partial sync (optional). Default: FULL_SYNC=true (all settings are synced). To enable partial sync, set nebula_sync_full_sync: "false" and define nebula_sync_additional_settings, e.g.: nebula_sync_full_sync: "false", nebula_sync_additional_settings: { SYNC_CONFIG_DNS: "true", SYNC_CONFIG_DHCP: "true" } - https://github.com/lovelaze/nebula-sync#optional-environment-variables
-nebula_sync_full_sync: "true"
+nebula_sync_full_sync: true
 nebula_sync_additional_settings: {}
 
 ## Pi-hole as a recursive DNS server
@@ -35,29 +35,30 @@ pihole_web_boxed_layout: true # If true, the Pi-hole web interface uses a "boxed
 pihole_web_theme: "default-auto" # Web interface theme pihole_web_theme: "default-auto". One of: "default-auto", "default-light", "default-dark", "default-darker", "high-contrast", "high-contrast-dark", "lcars".
 pihole_privacy_level: "0" # Controls query logging and data visibility: 0 = full logging, 1 = hide domains, 2 = hide domains & clients, 3 = anonymize everything.
 pihole_interface: "eth0" # Interface to use for DNS.
-pihole_query_logging: "true" # Log DNS queries and replies to pihole.log.
+pihole_query_logging: true # Log DNS queries and replies to pihole.log.
 pihole_socket_listening: "ALL" # defines how Pi-hole responds to DNS queries: "LOCAL" (only local networks), "SINGLE" (only on the specified interface), "BIND" (binds only to specified interfaces), "ALL" (responds to all queries, risky), "NONE" (no configuration added, manual setup required).
-pihole_dns_1: "1.1.1.1" # This setting will be ignored when enable_unbound is set to true.
-pihole_dns_2: "1.0.0.1" # This setting will be ignored when enable_unbound is set to true.
-pihole_cname_deep_inspect: "true" # Enables deep CNAME inspection; may increase CPU usage on low-end devices.
-pihole_block_esni: "true" # Blocks _esni. subdomains to prevent ESNI-based encrypted SNI tracking.
-pihole_edns0_ecs: "true"  # Enables EDNS0 client subnet (ECS) support for retrieving client IPs behind NAT.
-pihole_ignore_localhost: "false" # If true, Pi-hole ignores and does not log queries from localhost (127.0.0.1 and ::1).
-pihole_domain_needed: "false" # If "true", single-label (dotless) queries are blocked; "false" forwards them upstream.
-pihole_bogus_priv: "true" # If "true", reverse lookups for private IPs return NXDOMAIN instead of forwarding.
+pihole_upstream_dns: # This setting will be ignored when enable_unbound is set to true.
+  - "1.1.1.1"
+  - "1.0.0.1"
+pihole_cname_deep_inspect: true # Enables deep CNAME inspection; may increase CPU usage on low-end devices.
+pihole_block_esni: true # Blocks _esni. subdomains to prevent ESNI-based encrypted SNI tracking.
+pihole_edns0_ecs: true # Enables EDNS0 client subnet (ECS) support for retrieving client IPs behind NAT.
+pihole_ignore_localhost: false # If true, Pi-hole ignores and does not log queries from localhost (127.0.0.1 and ::1).
+pihole_domain_needed: false # If "true", single-label (dotless) queries are blocked; "false" forwards them upstream.
+pihole_bogus_priv: true # If "true", reverse lookups for private IPs return NXDOMAIN instead of forwarding.
 pihole_dns_cache_size: 10000 # # Sets the DNS cache size; higher values improve caching but increase memory usage. Default recommended: 10000.
-pihole_dnssec: "false" # Validate DNS replies using DNSSEC?
-pihole_show_dnssec: "true" # Enable DNSSEC logging and statistics.
-pihole_refresh_names: "IPV4_ONLY"  # Controls PTR query refresh: "IPV4_ONLY" (IPv4 only, recommended), "ALL" (IPv4 & IPv6), "UNKNOWN" (resolve once), "NONE" (disable).
+pihole_dnssec: false # Validate DNS replies using DNSSEC?
+pihole_show_dnssec: true # Enable DNSSEC logging and statistics.
+pihole_refresh_names: "IPV4_ONLY" # Controls PTR query refresh: "IPV4_ONLY" (IPv4 only, recommended), "ALL" (IPv4 & IPv6), "UNKNOWN" (resolve once), "NONE" (disable).
 pihole_rate_limit_count: 1000 # Maximum number of DNS queries allowed per client within the rate-limiting interval before being temporarily blocked.
 pihole_rate_limit_interval: 60 # Time interval (in seconds) for rate limiting; clients exceeding the query limit within this period will be temporarily blocked.
 pihole_reply_when_busy: "DROP" # Defines how Pi-hole responds when the gravity database is unavailable: "BLOCK", "ALLOW", "REFUSE", or "DROP".
-pihole_block_mozilla_canary: "true" # Blocks Firefox from automatically enabling DNS-over-HTTPS (DoH).
-pihole_block_icloud_pr: "true" # If true, Pi-hole blocks Apple's iCloud Private Relay domains to prevent bypassing network filtering.
+pihole_block_mozilla_canary: true # Blocks Firefox from automatically enabling DNS-over-HTTPS (DoH).
+pihole_block_icloud_pr: true # If true, Pi-hole blocks Apple's iCloud Private Relay domains to prevent bypassing network filtering.
 pihole_ptr: "HOSTNAMEFQDN" # Defines the response for PTR queries to local interface addresses: "NONE", "HOSTNAME", "HOSTNAMEFQDN", or "PI.HOLE".
 pihole_max_db_days: 91 # Number of days to store DNS query history in the database (default: 91).
 pihole_db_interval: 60 # Time interval (in seconds) for writing queries to the database (default: 60).
-pihole_rev_servers: [] # Optional list of CIDRs, targets, and domains for DNS conditional forwarding.
+# pihole_rev_servers: [] # Optional list of CIDRs, targets, and domains for DNS conditional forwarding.
 # Example usage:
 # pihole_rev_servers:
 #   - cidr: "10.0.20.0/24"
@@ -78,12 +79,12 @@ pihole_updatelists_allowlists_url: "" # Remote list URL containing list of allow
 pihole_updatelists_regex_blacklist_url: "https://raw.githubusercontent.com/mmotti/pihole-regex/master/regex.list" # https://github.com/mmotti/pihole-regex # Remote list URL containing regex rules for blacklisting.
 pihole_updatelists_regex_whitelist_url: "https://raw.githubusercontent.com/mmotti/pihole-regex/master/whitelist.list" # https://github.com/mmotti/pihole-regex # Remote list URL containing regex rules for whitelisting.
 
-# # Pi-hole custom DNS records (host entries)
+## Pi-hole custom DNS records (host entries)
 # local_dns_records: |
 #   10.0.20.88 node.homelab.local
 #   10.0.20.96 nas.homelab.local
 
-# # Pi-hole custom CNAME records
+## Pi-hole custom CNAME records
 # local_cname_records: |
 #   node.homelab.local,webserver.homelab.local
 #   cname.example.com,somehost.example.com,300
