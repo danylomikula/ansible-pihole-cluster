@@ -75,8 +75,6 @@ However, if you place a file named `custom-pihole.toml` in the **root directory 
 2. If found, it **copies** the custom file to `/etc/pihole/pihole.toml`, replacing the default template.
 3. If no custom file is found, the playbook **generates** `pihole.toml` from the Jinja2 template (`pihole.toml.j2`) **using values from `inventory/group_vars/all.yml` and other relevant configuration files**.
 
-> **Note:** If `custom-pihole.toml` is missing, Ansible will fall back to generating `pihole.toml` from `pihole.toml.j2` using the configured variables.
-
 ## ⚙️ Updates
 To quickly update system or change settings you can run `update-pihole.yaml` playbook<br />
 `ansible-playbook update-pihole.yaml`
