@@ -118,14 +118,6 @@
     var: process_status.stdout_lines
   when: pihole_version != pihole_version_installed
 
-- name: Check if Pi-hole FTL service is running
-  ansible.builtin.systemd:
-    name: pihole-FTL
-  register: pihole_ftl_status
-  retries: 10
-  delay: 5
-  until: pihole_ftl_status.status.ActiveState == 'active'
-
 - name: Set Pi-hole FTL WEB password
   ansible.builtin.command: pihole setpassword {{ pihole_webpassword }}
   changed_when: false
@@ -134,3 +126,11 @@
   ansible.builtin.systemd:
     name: pihole-FTL
     state: restarted
+
+- name: Check if Pi-hole FTL service is running
+  ansible.builtin.systemd:
+    name: pihole-FTL
+  register: pihole_ftl_status
+  retries: 10
+  delay: 5
+  until: pihole_ftl_status.status.ActiveState == 'active'
