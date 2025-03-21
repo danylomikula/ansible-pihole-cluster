@@ -47,13 +47,21 @@
     mozillaCanary = {{ pihole_block_mozilla_canary | lower }}
     iCloudPrivateRelay = {{ pihole_block_icloud_pr | lower }}
 
-  [dns.reply.host]
-{% if enable_ipv6_support == true %}
-    IPv4 = "{{ pihole_vip_ipv4 }}"
-    IPv6 = "{{ pihole_vip_ipv6 }}"
-{% else %}
-    IPv4 = "{{ pihole_vip_ipv4 }}"
-{% endif %}
+    [dns.reply.host]
+      force4 = {{ (pihole_vip_ipv4 | length > 0) | lower }}
+      IPv4 = "{{ pihole_vip_ipv4 | regex_replace('/.*', '') if pihole_vip_ipv4 | length > 0 else '' }}"
+
+      force6 = {% if enable_ipv6_support and (pihole_vip_ipv6 | length > 0) %}true{% else %}false{% endif %}
+
+      IPv6 = "{{ pihole_vip_ipv6 | regex_replace('/.*', '') if enable_ipv6_support and pihole_vip_ipv6 | length > 0 else '' }}"
+
+    [dns.reply.blocking]
+      force4 = {{ (pihole_vip_ipv4 | length > 0) | lower }}
+      IPv4 = "{{ pihole_vip_ipv4 | regex_replace('/.*', '') if pihole_vip_ipv4 | length > 0 else '' }}"
+
+      force6 = {% if enable_ipv6_support and (pihole_vip_ipv6 | length > 0) %}true{% else %}false{% endif %}
+
+      IPv6 = "{{ pihole_vip_ipv6 | regex_replace('/.*', '') if enable_ipv6_support and pihole_vip_ipv6 | length > 0 else '' }}"
 
   [dns.rateLimit]
     count = {{ pihole_rate_limit_count }}
@@ -62,7 +70,29 @@
 [dhcp]
   active = false
 
+  [ntp.ipv4]
+    active = {{ pihole_ntp_ipv4_active | lower }}
+    address = "{{ pihole_ntp_ipv4_address }}"
+
+  [ntp.ipv6]
+    active = {{ pihole_ntp_ipv6_active | lower }}
+    address = "{{ pihole_ntp_ipv6_address }}"
+
+  [ntp.sync]
+    active = {{ pihole_ntp_sync_active | lower }}
+    server = "{{ pihole_ntp_sync_server }}"
+    interval = {{ pihole_ntp_sync_interval }}
+    count = {{ pihole_ntp_sync_count }}
+
+  [ntp.sync.rtc]
+    set = {{ pihole_ntp_sync_rtc_set | lower }}
+    device = "{{ pihole_ntp_sync_rtc_device }}"
+    utc = {{ pihole_ntp_sync_rtc_utc | lower }}
+
 [resolver]
+  resolveIPv4 = {{ pihole_resolve_ipv4 | lower }}
+  resolveIPv6 = {{ pihole_resolve_ipv6 | lower }}
+  networkNames = {{ pihole_network_names | lower }}
   refreshNames = "{{ pihole_refresh_names }}"
 
 [database]
@@ -78,7 +108,7 @@
     timeout = {{ pihole_web_session_timeout }}
 
   [webserver.interface]
-    boxed = {{ pihole_web_boxed_layout }}
+    boxed = {{ pihole_web_boxed_layout | lower }}
     theme = "{{ pihole_web_theme }}"
 
 [misc]

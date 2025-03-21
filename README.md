@@ -10,7 +10,7 @@
 ## 📖 General Information
 This Ansible playbook will allow you to bootstrap a Highly Available Pi-hole cluster with:
 - [x] [keepalived](https://github.com/acassen/keepalived)
-- [x] [Nebula Sync](https://github.com/lovelaze/nebula-sync)
+- [x] [nebula-sync](https://github.com/lovelaze/nebula-sync)
 - [x] [unbound](https://github.com/NLnetLabs/unbound)
 - [x] [pihole-updatelists](https://github.com/jacklul/pihole-updatelists)
 

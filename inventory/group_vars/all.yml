@@ -10,7 +10,7 @@ pihole_vip_ipv6: "fe80::53/64" # Floating (virtual) IPv6 for the failover betwee
 ## Nebula Sync Settings
 ## https://github.com/lovelaze/nebula-sync
 enable_nebula_sync: true
-nebula_sync_version: "v0.6.0" # https://github.com/lovelaze/nebula-sync/pkgs/container/nebula-sync
+nebula_sync_version: "v0.7.0" # https://github.com/lovelaze/nebula-sync/pkgs/container/nebula-sync
 nebula_sync_cron: "*/30 * * * *" # https://github.com/lovelaze/nebula-sync?tab=readme-ov-file#optional-environment-variables
 nebula_sync_client_skip_tls_verification: true # https://github.com/lovelaze/nebula-sync?tab=readme-ov-file#optional-environment-variables
 nebula_sync_run_gravity: true # https://github.com/lovelaze/nebula-sync?tab=readme-ov-file#optional-environment-variables
@@ -49,6 +49,9 @@ pihole_bogus_priv: true # If "true", reverse lookups for private IPs return NXDO
 pihole_dns_cache_size: 10000 # # Sets the DNS cache size; higher values improve caching but increase memory usage. Default recommended: 10000.
 pihole_dnssec: false # Validate DNS replies using DNSSEC?
 pihole_show_dnssec: true # Enable DNSSEC logging and statistics.
+pihole_resolve_ipv4: true # Should FTL resolve IPv4 addresses to hostnames?
+pihole_resolve_ipv6: true # Should FTL resolve IPv6 addresses to hostnames?
+pihole_network_names: true # Should FTL attempt to derive client names from the network table?
 pihole_refresh_names: "IPV4_ONLY" # Controls PTR query refresh: "IPV4_ONLY" (IPv4 only, recommended), "ALL" (IPv4 & IPv6), "UNKNOWN" (resolve once), "NONE" (disable).
 pihole_rate_limit_count: 1000 # Maximum number of DNS queries allowed per client within the rate-limiting interval before being temporarily blocked.
 pihole_rate_limit_interval: 60 # Time interval (in seconds) for rate limiting; clients exceeding the query limit within this period will be temporarily blocked.
@@ -58,6 +61,17 @@ pihole_block_icloud_pr: true # If true, Pi-hole blocks Apple's iCloud Private Re
 pihole_ptr: "HOSTNAMEFQDN" # Defines the response for PTR queries to local interface addresses: "NONE", "HOSTNAME", "HOSTNAMEFQDN", or "PI.HOLE".
 pihole_max_db_days: 91 # Number of days to store DNS query history in the database (default: 91).
 pihole_db_interval: 60 # Time interval (in seconds) for writing queries to the database (default: 60).
+pihole_ntp_ipv4_active: false # Enable or disable IPv4 NTP server ("true" = listen on IPv4).
+pihole_ntp_ipv4_address: "" # IPv4 address to listen on for NTP requests ("" => 0.0.0.0).
+pihole_ntp_ipv6_active: false # Enable or disable IPv6 NTP server ("true" = listen on IPv6).
+pihole_ntp_ipv6_address: "" # IPv6 address to listen on for NTP requests ("" => ::).
+pihole_ntp_sync_active: true # Sync system time with an upstream NTP server ("true" = enabled).
+pihole_ntp_sync_server: "pool.ntp.org" # Upstream NTP server address (e.g. "pool.ntp.org").
+pihole_ntp_sync_interval: 3600 # Interval (seconds) between time sync attempts.
+pihole_ntp_sync_count: 8 # Number of requests to average before updating system clock.
+pihole_ntp_sync_rtc_set: false # Update hardware RTC if available.
+pihole_ntp_sync_rtc_device: "" # Path to RTC device ("" => auto-discovery).
+pihole_ntp_sync_rtc_utc: true # Whether RTC should be maintained in UTC.
 # pihole_rev_servers: [] # Optional list of CIDRs, targets, and domains for DNS conditional forwarding.
 # Example usage:
 # pihole_rev_servers:
