@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.1.0](https://github.com/danylomikula/ansible-pihole-cluster/compare/v2.0.0...v2.1.0) (2025-03-21)
+
+### Features
+
+* Expand pihole.toml configuration & bump nebula-sync v0.7.0 ([#17](https://github.com/danylomikula/ansible-pihole-cluster/issues/17)) ([141fe7e](https://github.com/danylomikula/ansible-pihole-cluster/commit/141fe7e9735f4ad9f245fc47387300d7854b8295))
+
 ## [2.0.0](https://github.com/danylomikula/ansible-pihole-cluster/compare/v1.3.0...v2.0.0) (2025-03-19)
 
 ### ⚠ BREAKING CHANGES
