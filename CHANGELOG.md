@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.2.0](https://github.com/danylomikula/ansible-pihole-cluster/compare/v2.1.0...v2.2.0) (2025-06-01)
+
+### Features
+
+* Bump Pi-hole to 6.1, allow NTP in firewalld, and add pihole‑FTL restart retries ([#18](https://github.com/danylomikula/ansible-pihole-cluster/issues/18)) ([b4e55e1](https://github.com/danylomikula/ansible-pihole-cluster/commit/b4e55e1496f0791ada9a88bda84b7e85789c51fb))
+
 ## [2.1.0](https://github.com/danylomikula/ansible-pihole-cluster/compare/v2.0.0...v2.1.0) (2025-03-21)
 
 ### Features
