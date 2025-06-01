@@ -122,10 +122,18 @@
   ansible.builtin.command: pihole setpassword {{ pihole_webpassword }}
   changed_when: false
 
+- name: Wait 10 seconds before restarting pihole-FTL
+  ansible.builtin.pause:
+    seconds: 10
+
 - name: Restart pihole-FTL service
   ansible.builtin.systemd:
     name: pihole-FTL
     state: restarted
+  register: restart_result
+  until: restart_result is succeeded
+  retries: 3
+  delay: 5
 
 - name: Check if Pi-hole FTL service is running
   ansible.builtin.systemd:

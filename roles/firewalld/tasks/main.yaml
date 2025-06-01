@@ -41,6 +41,13 @@
     state: enabled
   when: enable_ipv6_support
 
+- name: Allow NTP service
+  ansible.posix.firewalld:
+    service: ntp
+    permanent: true
+    immediate: true
+    state: enabled
+
 - name: Create ftl zone
   ansible.posix.firewalld:
     zone: ftl
