@@ -1,4 +1,5 @@
-buffer/
+.ansible
+custom-pihole.toml
 .env/
 *.log
 .vscode
