@@ -31,6 +31,15 @@
     mode: "0644"
   notify: Restart unbound service
 
+- name: Populate service facts
+  ansible.builtin.service_facts:
+
+- name: Disable unbound-resolvconf service if exists
+  ansible.builtin.systemd_service:
+    name: unbound-resolvconf
+    enabled: false
+  when: "'unbound-resolvconf.service' in ansible_facts.services"
+
 - name: Check if resolvconf.conf exists
   ansible.builtin.stat:
     path: /etc/resolvconf.conf
