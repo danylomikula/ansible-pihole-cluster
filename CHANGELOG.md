@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.3.0](https://github.com/danylomikula/ansible-pihole-cluster/compare/v2.2.0...v2.3.0) (2025-08-17)
+
+### Features
+
+* Rocky Linux 10 support + Pi-hole 6.1.4 + Nebula Sync 0.11.0 ([#19](https://github.com/danylomikula/ansible-pihole-cluster/issues/19)) ([97446be](https://github.com/danylomikula/ansible-pihole-cluster/commit/97446bea85161464333813fba017e94bdf22a7a5))
+
 ## [2.2.0](https://github.com/danylomikula/ansible-pihole-cluster/compare/v2.1.0...v2.2.0) (2025-06-01)
 
 ### Features
