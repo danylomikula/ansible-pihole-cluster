@@ -36,11 +36,11 @@
     - docker_check.rc != 0
     - ansible_os_family == "Debian"
 
-- name: Add Docker repository [RedHat]
+- name: Add Docker CE repository [RedHat]
   ansible.builtin.yum_repository:
     name: docker-ce
     description: Docker CE Repository
-    baseurl: "https://download.docker.com/linux/rhel/$releasever/$basearch/stable"
+    baseurl: "https://download.docker.com/linux/centos/10/$basearch/stable"
     enabled: true
     gpgcheck: true
     gpgkey: "https://download.docker.com/linux/centos/gpg"

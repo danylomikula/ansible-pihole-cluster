@@ -118,6 +118,12 @@
     var: process_status.stdout_lines
   when: pihole_version != pihole_version_installed
 
+- name: Add user to group pihole
+  ansible.builtin.user:
+    name: "{{ ansible_user }}"
+    groups: pihole
+    append: true
+
 - name: Set Pi-hole FTL WEB password
   ansible.builtin.command: pihole setpassword {{ pihole_webpassword }}
   changed_when: false

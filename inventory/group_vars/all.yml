@@ -10,7 +10,7 @@ pihole_vip_ipv6: "fe80::53/64" # Floating (virtual) IPv6 for the failover betwee
 ## Nebula Sync Settings
 ## https://github.com/lovelaze/nebula-sync
 enable_nebula_sync: true
-nebula_sync_version: "v0.7.0" # https://github.com/lovelaze/nebula-sync/pkgs/container/nebula-sync
+nebula_sync_version: "v0.11.0" # https://github.com/lovelaze/nebula-sync/pkgs/container/nebula-sync
 nebula_sync_cron: "*/30 * * * *" # https://github.com/lovelaze/nebula-sync?tab=readme-ov-file#optional-environment-variables
 nebula_sync_client_skip_tls_verification: true # https://github.com/lovelaze/nebula-sync?tab=readme-ov-file#optional-environment-variables
 nebula_sync_run_gravity: true # https://github.com/lovelaze/nebula-sync?tab=readme-ov-file#optional-environment-variables
@@ -24,7 +24,7 @@ enable_unbound: true
 unbound_verbosity: 0 # https://docs.pi-hole.net/guides/dns/unbound/#add-logging-to-unbound
 
 ## Pi-hole general configuration
-pihole_version: 6.1 # https://github.com/pi-hole/pi-hole/releases
+pihole_version: 6.1.4 # https://github.com/pi-hole/pi-hole/releases
 pihole_webpassword: "SUPER_SECURE_PASSWORD" # Web interface password set via `pihole -a -p`; stored as a hash in `pihole.toml`.
 pihole_local_domain: "homelab.local" # Options: "lan", "local", "home", or a custom domain (e.g., "homelab.local").
 pihole_web_domain: "{{ ansible_hostname }}.{{ pihole_local_domain }}" # Sets the Pi-hole web interface domain using the system hostname and local domain (e.g., "pihole-node1.lan"). 

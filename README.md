@@ -19,7 +19,7 @@ Has been tested on:
 - [x] Ubuntu - version 22.04 (Jammy Jellyfish)
 - [x] Ubuntu - version 24.04 (Noble Numbat)
 - [x] Ubuntu - version 24.10 (Oracular Oriole)
-- [x] Rocky - version 9.5
+- [x] Rocky - version 10
 
 ## ✅ Requirements
 - Ansible 2.14+

@@ -3,6 +3,9 @@ server:
     # logfile: "/var/log/unbound/unbound.log"
     verbosity: {{ unbound_verbosity }}
 
+	# If you give "" no chroot is performed. The path must not end in a /.
+	# chroot: ""
+
     interface: 127.0.0.1
     port: 5335
     do-ip4: yes
@@ -10,11 +13,7 @@ server:
     do-tcp: yes
 
     # May be set to yes if you have IPv6 connectivity
-{% if enable_ipv6_support == true %}
     do-ip6: yes
-{% else %}
-    do-ip6: no
-{% endif %}
 
     # You want to leave this to no unless you have *native* IPv6. With 6to4 and
     # Terredo tunnels your web browser should favor IPv4 for the same reasons
@@ -68,3 +67,14 @@ server:
     private-address: 10.0.0.0/8
     private-address: fd00::/8
     private-address: fe80::/10
+
+    # Ensure no reverse queries to non-public IP ranges (RFC6303 4.2)
+    private-address: 192.0.2.0/24
+    private-address: 198.51.100.0/24
+    private-address: 203.0.113.0/24
+    private-address: 255.255.255.255/32
+    private-address: 2001:db8::/32
+
+	# Allow the domain (and its subdomains) to contain private addresses.
+	# local-data statements are allowed to contain private addresses too.
+	private-domain: "{{ pihole_local_domain }}"
