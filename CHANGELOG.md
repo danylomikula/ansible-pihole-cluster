@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.4.0](https://github.com/danylomikula/ansible-pihole-cluster/compare/v2.3.0...v2.4.0) (2025-11-07)
+
+### Features
+
+* Update README, Nebula Sync version and unbound config ([#20](https://github.com/danylomikula/ansible-pihole-cluster/issues/20)) ([71ab36c](https://github.com/danylomikula/ansible-pihole-cluster/commit/71ab36cb43a434b33bf0b6f5ad1aee4891d9f1cc))
+
 ## [2.3.0](https://github.com/danylomikula/ansible-pihole-cluster/compare/v2.2.0...v2.3.0) (2025-08-17)
 
 ### Features
