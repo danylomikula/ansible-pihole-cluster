@@ -3,8 +3,11 @@ server:
     # logfile: "/var/log/unbound/unbound.log"
     verbosity: {{ unbound_verbosity }}
 
-	# If you give "" no chroot is performed. The path must not end in a /.
-	# chroot: ""
+	chroot: ""
+
+    directory: "/etc/unbound"
+    username: "unbound"
+    pidfile: "/run/unbound.pid"
 
     interface: 127.0.0.1
     port: 5335

@@ -5,6 +5,11 @@
       <img src=".github/logo.png" height="256" width="256" alt="pi-hole HA cluster project logo" />
     </picture>
   </h1>
+  <p align="center">
+    <a href="https://dev.to/mikula/build-a-highly-available-pi-hole-cluster-with-ansible-vrrp-gbp">
+      <img src="https://img.shields.io/badge/dev.to-Read%20the%20tutorial-black?logo=dev.to" alt="Read the tutorial on dev.to" />
+    </a>
+  </p>
 </div>
 
 ## 📖 General Information
@@ -40,6 +45,9 @@ Has been tested on:
     ```bash 
     echo rocky 'ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/rocky
     ```
+
+## 📚 Guide
+Read the step-by-step guide → **[Build a Highly Available Pi-hole Cluster with Ansible (VRRP)](https://dev.to/mikula/build-a-highly-available-pi-hole-cluster-with-ansible-vrrp-gbp)**
 
 ## 🚀 Getting Started
 - Install collections that this playbook uses by running<br /> `ansible-galaxy collection install -r ./collections/requirements.yaml`
