@@ -1,0 +1,27 @@
+---
+# Nebula Sync role defaults
+# https://github.com/lovelaze/nebula-sync
+
+# Enable nebula-sync container deployment
+nebula_sync_enabled: true
+
+# Container version
+# https://github.com/lovelaze/nebula-sync/pkgs/container/nebula-sync
+nebula_sync_version: "v0.11.1"
+
+# Sync schedule (cron format)
+nebula_sync_cron: "*/30 * * * *"
+
+# Skip TLS certificate verification for self-signed certs
+nebula_sync_client_skip_tls_verification: true
+
+# Run gravity update after sync
+nebula_sync_run_gravity: true
+
+# Full sync mode (all settings synced)
+# Set to false and use nebula_sync_additional_settings for partial sync
+nebula_sync_full_sync: true
+
+# Additional settings for partial sync
+# Example: { SYNC_CONFIG_DNS: "true", SYNC_CONFIG_DHCP: "true" }
+nebula_sync_additional_settings: {}

@@ -1,0 +1,50 @@
+---
+dependencies: []
+
+argument_specs:
+  main:
+    short_description: Deploy nebula-sync container for Pi-hole synchronization
+    description:
+      - Deploys nebula-sync Docker container on master node
+      - Synchronizes Pi-hole settings between cluster nodes
+      - Supports full or partial sync modes
+    options:
+      nebula_sync_enabled:
+        type: bool
+        required: false
+        default: true
+        description: Enable nebula-sync deployment
+      nebula_sync_version:
+        type: str
+        required: false
+        default: "v0.11.1"
+        description: Nebula-sync container version
+      nebula_sync_cron:
+        type: str
+        required: false
+        default: "*/30 * * * *"
+        description: Sync schedule in cron format
+      nebula_sync_client_skip_tls_verification:
+        type: bool
+        required: false
+        default: true
+        description: Skip TLS certificate verification
+      nebula_sync_run_gravity:
+        type: bool
+        required: false
+        default: true
+        description: Run gravity update after sync
+      nebula_sync_full_sync:
+        type: bool
+        required: false
+        default: true
+        description: Enable full sync mode
+      nebula_sync_additional_settings:
+        type: dict
+        required: false
+        default: {}
+        description: Additional settings for partial sync mode
+      pihole_web_password:
+        type: str
+        required: true
+        description: Pi-hole admin password (global variable from pihole role)

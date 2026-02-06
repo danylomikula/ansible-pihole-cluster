@@ -1,51 +1,32 @@
-- name: Ensures /opt/nebula-sync dir exists
-  ansible.builtin.file:
-    path: /opt/nebula-sync
-    state: directory
-    mode: "0755"
-  when: inventory_hostname in groups['master']
-
-- name: Copy docker-compose.yml for nebula-sync
-  ansible.builtin.template:
-    src: "docker-compose.yml.j2"
-    dest: "/opt/nebula-sync/docker-compose.yml"
-    mode: "0644"
-  when: inventory_hostname in groups['master']
-
-- name: Run nebula-sync container using Docker Compose v2
-  community.docker.docker_compose_v2:
-    project_src: "/opt/nebula-sync"
-    state: present
-    pull: always
-  register: nebula_sync_deploy
-  when: inventory_hostname in groups['master']
-
-- name: Show the result of nebula_sync_deploy
-  ansible.builtin.debug:
-    var: nebula_sync_deploy
-  when: inventory_hostname in groups['master']
-
-- name: Get info on container
-  community.docker.docker_container_info:
-    name: nebula-sync
-  register: nebula_sync_info
-  when: inventory_hostname in groups['master']
-
-- name: Does nebula-sync container exist and running?
-  ansible.builtin.debug:
-    msg: >-
-      The nebula-sync container {{ "exists" if nebula_sync_info.exists else "does not exist" }}
-      and state is {{
-        "running" if (nebula_sync_info.exists and
-        nebula_sync_info.container.State.Status == "running")
-        else "not running"
-      }}
-  when: inventory_hostname in groups['master']
-
-- name: Print information about nebula-sync container
-  ansible.builtin.debug:
-    var: nebula_sync_info.container
+---
+- name: Nebula-sync deployment
   when:
+    - nebula_sync_enabled | default(true)
     - inventory_hostname in groups['master']
-    - nebula_sync_info.exists
-    - nebula_sync_info.container.State.Status == 'running'
+  tags:
+    - nebula_sync
+  block:
+    - name: Ensure nebula-sync directory exists
+      ansible.builtin.file:
+        path: /opt/nebula-sync
+        state: directory
+        mode: "0755"
+
+    - name: Deploy docker-compose.yml for nebula-sync
+      ansible.builtin.template:
+        src: "docker-compose.yml.j2"
+        dest: /opt/nebula-sync/docker-compose.yml
+        mode: "0644"
+
+    - name: Deploy .env file for nebula-sync
+      ansible.builtin.copy:
+        content: "PIHOLE_PASSWORD='{{ pihole_web_password }}'"
+        dest: /opt/nebula-sync/.env
+        mode: "0600"
+      no_log: true
+
+    - name: Start nebula-sync container
+      community.docker.docker_compose_v2:
+        project_src: /opt/nebula-sync
+        state: present
+        pull: always
