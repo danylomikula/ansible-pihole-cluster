@@ -1,3 +1,19 @@
+{# v3.0.0 - Uses global ipv6_* variables #}
+{% set _enable_ipv6 = ipv6_enabled | default(false) %}
+{% set _vip_ipv4 = keepalived_vip_ipv4 | default('10.20.0.53/16') %}
+{% set _vip_ipv6 = ipv6_vip | default('fe80::53/64') %}
+{% set _router_id = keepalived_virtual_router_id | default(1) %}
+{% set _advert_int = keepalived_advert_int | default(1) %}
+{% set _preempt_delay = keepalived_preempt_delay | default(900) %}
+{% set _interface = ansible_default_ipv4.interface %}
+{# Build unicast peer list (all cluster hosts except current) #}
+{% set _peers = [] %}
+{% for host in groups['pihole_cluster'] | default([]) %}
+{% if host != inventory_hostname %}
+{% set _ = _peers.append(hostvars[host].ansible_host | default(hostvars[host].ansible_default_ipv4.address)) %}
+{% endif %}
+{% endfor %}
+
 global_defs {
     script_user {{ ansible_user }}
     enable_script_security
@@ -8,13 +24,13 @@ global_defs {
 
 vrrp_script check_pihole {
     script "/etc/keepalived/check_pihole.sh"
-    interval 1
-    timeout 4
-    fall 1
-    rise 1
+    interval {{ keepalived_check_interval | default(2) }}
+    timeout {{ keepalived_check_timeout | default(2) }}
+    fall {{ keepalived_check_fall | default(3) }}
+    rise {{ keepalived_check_rise | default(2) }}
 }
 
-{% if enable_ipv6_support == true %}
+{% if _enable_ipv6 %}
 vrrp_sync_group PIHOLE {
     group {
         PIHOLE-IPv4
@@ -24,33 +40,49 @@ vrrp_sync_group PIHOLE {
     track_script {
         check_pihole
     }
-
 }
 
 vrrp_instance PIHOLE-IPv4 {
-    interface {{ ansible_default_ipv4.interface }}
-    virtual_router_id 1
+    interface {{ _interface }}
+    virtual_router_id {{ _router_id }}
     priority {{ priority }}
-    advert_int 1
-    preempt_delay 900
+    advert_int {{ _advert_int }}
+    preempt_delay {{ _preempt_delay }}
+
+{% if _peers | length > 0 %}
+    unicast_src_ip {{ ansible_default_ipv4.address }}
+    unicast_peer {
+{% for peer in _peers %}
+        {{ peer }}
+{% endfor %}
+    }
+{% endif %}
 
     virtual_ipaddress {
-        {{ pihole_vip_ipv4 }}
+        {{ _vip_ipv4 }}
     }
 }
 
 vrrp_instance PIHOLE-IPv6 {
-    interface {{ ansible_default_ipv6.interface | default(ansible_default_ipv4.interface) }}
-    virtual_router_id 1
+    interface {{ ansible_default_ipv6.interface | default(_interface) }}
+    virtual_router_id {{ _router_id + 1 }}
     priority {{ priority }}
-    advert_int 1
-    preempt_delay 900
+    advert_int {{ _advert_int }}
+    preempt_delay {{ _preempt_delay }}
+
+{% if _peers | length > 0 %}
+    unicast_src_ip {{ ansible_default_ipv4.address }}
+    unicast_peer {
+{% for peer in _peers %}
+        {{ peer }}
+{% endfor %}
+    }
+{% endif %}
 
     virtual_ipaddress {
-        {{ pihole_vip_ipv6 }}
+        {{ _vip_ipv6 }}
     }
 }
-
 {% else %}
 vrrp_sync_group PIHOLE {
     group {
@@ -63,14 +95,23 @@ vrrp_sync_group PIHOLE {
 }
 
 vrrp_instance PIHOLE-IPv4 {
-    interface {{ ansible_default_ipv4.interface }}
-    virtual_router_id 1
+    interface {{ _interface }}
+    virtual_router_id {{ _router_id }}
     priority {{ priority }}
-    advert_int 1
-    preempt_delay 900
+    advert_int {{ _advert_int }}
+    preempt_delay {{ _preempt_delay }}
+
+{% if _peers | length > 0 %}
+    unicast_src_ip {{ ansible_default_ipv4.address }}
+    unicast_peer {
+{% for peer in _peers %}
+        {{ peer }}
+{% endfor %}
+    }
+{% endif %}
 
     virtual_ipaddress {
-        {{ pihole_vip_ipv4 }}
+        {{ _vip_ipv4 }}
     }
 }
 {% endif %}

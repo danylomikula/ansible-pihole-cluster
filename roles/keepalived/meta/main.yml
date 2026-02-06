@@ -1,0 +1,55 @@
+---
+dependencies: []
+
+argument_specs:
+  main:
+    short_description: Install and configure keepalived for HA failover
+    description:
+      - Installs and configures keepalived for VRRP failover
+      - Creates virtual IP addresses for Pi-hole cluster
+      - Deploys health check script for Pi-hole FTL
+    options:
+      keepalived_vip_ipv4:
+        type: str
+        required: false
+        default: "10.20.0.53/16"
+        description: Virtual IPv4 address with CIDR notation (e.g., 10.20.0.53/16)
+      keepalived_virtual_router_id:
+        type: int
+        required: false
+        default: 1
+        description: VRRP virtual router ID (1-255)
+      keepalived_advert_int:
+        type: int
+        required: false
+        default: 1
+        description: VRRP advertisement interval in seconds
+      keepalived_preempt_delay:
+        type: int
+        required: false
+        default: 900
+        description: Delay before preemption in seconds
+      keepalived_check_interval:
+        type: int
+        required: false
+        default: 2
+        description: Health check interval in seconds
+      keepalived_check_timeout:
+        type: int
+        required: false
+        default: 2
+        description: Health check timeout in seconds
+      keepalived_check_fall:
+        type: int
+        required: false
+        default: 3
+        description: Failures before marking DOWN
+      keepalived_check_rise:
+        type: int
+        required: false
+        default: 2
+        description: Successes before marking UP
+      priority:
+        type: int
+        required: true
+        description: VRRP priority (higher value = more likely to be master)

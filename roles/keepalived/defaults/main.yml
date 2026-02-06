@@ -1,0 +1,17 @@
+---
+# Keepalived role defaults
+
+# Virtual IP addresses for failover
+# Use CIDR notation (e.g., 10.20.0.53/16)
+keepalived_vip_ipv4: "10.20.0.53/16"
+
+# VRRP configuration
+keepalived_virtual_router_id: 1
+keepalived_advert_int: 1
+keepalived_preempt_delay: 900
+
+# Health check settings
+keepalived_check_interval: 2      # Check every N seconds
+keepalived_check_timeout: 2       # Script timeout
+keepalived_check_fall: 3          # Failures before marking DOWN
+keepalived_check_rise: 2          # Successes before marking UP

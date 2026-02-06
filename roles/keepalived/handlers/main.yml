@@ -1,3 +1,4 @@
+---
 - name: Reload sysctl config
   ansible.builtin.command: sysctl -p
   changed_when: false
