@@ -20,4 +20,5 @@ argument_specs:
         required: false
         default:
           - unzip
+          - curl
         description: List of packages to install during bootstrap

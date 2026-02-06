@@ -12,7 +12,11 @@ Prepares the system for Pi-hole cluster deployment.
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `bootstrap_timezone` | `America/New_York` | System timezone (IANA format) |
-| `bootstrap_install_packages` | `[unzip]` | Packages to install |
+| `bootstrap_install_packages` | `[unzip, curl]` | Packages to install |
+
+Additional packages installed automatically:
+- **All systems**: DNS utilities (`dnsutils` on Debian, `bind-utils` on RedHat)
+- **RedHat only**: SELinux Python bindings (`python3-libselinux`, `python3-requests`)
 
 SELinux is automatically disabled on RedHat-based systems.
 
