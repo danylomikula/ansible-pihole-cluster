@@ -1,0 +1,12 @@
+---
+dependencies: []
+
+argument_specs:
+  main:
+    short_description: Verify Pi-hole cluster service status
+    description:
+      - Checks status of critical services automatically
+      - Displays DNS configuration and virtual IP status
+      - Verifies keepalived and Pi-hole FTL are running
+      - Checks unbound when unbound_enabled is true
+    options: {}

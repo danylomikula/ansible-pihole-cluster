@@ -1,34 +1,53 @@
-- name: Ensure core services are started
+---
+- name: Ensure keepalived service is started
   ansible.builtin.service:
-    name: "{{ item }}"
+    name: keepalived
     state: started
-  register: result
-  with_items:
-    - keepalived
-    - pihole-FTL
+  register: _status_keepalived
   failed_when:
-    - result.failed == true
-    - '"Could not find service" not in result.msg'
+    - _status_keepalived.failed == true
+    - '"Could not find service" not in _status_keepalived.msg'
+  tags:
+    - status
+
+- name: Ensure pihole-FTL service is started
+  ansible.builtin.service:
+    name: pihole-FTL
+    state: started
+  register: _status_pihole
+  failed_when:
+    - _status_pihole.failed == true
+    - '"Could not find service" not in _status_pihole.msg'
+  tags:
+    - status
 
 - name: Ensure unbound service is started
   ansible.builtin.service:
     name: unbound
     state: started
-  when: enable_unbound
-  register: result
+  when: unbound_enabled | default(true)
+  register: _status_unbound
   failed_when:
-    - result.failed == true
-    - '"Could not find unbound service" not in result.msg'
+    - _status_unbound.failed == true
+    - '"Could not find" not in _status_unbound.msg | default("")'
+  tags:
+    - status
 
-- name: "Determine Pi-hole host IPs"
+- name: Determine Pi-hole virtual IP addresses
   ansible.builtin.set_fact:
-    pihole_local_ipv4: "{{ pihole_vip_ipv4.split('/')[0] }}"
-    pihole_local_ipv6: "{% if enable_ipv6_support == true %} '{{ pihole_vip_ipv6.split('/')[0] }}' {% else %} IPv6 Support Disabled. {% endif %}"
+    _status_vip_ipv4: "{{ (keepalived_vip_ipv4 | default('10.20.0.53/16')).split('/')[0] }}"
+    _status_vip_ipv6: "{{ (ipv6_vip | default('fe80::53/64')).split('/')[0] if (ipv6_enabled | default(false)) else 'IPv6 Disabled' }}"
+  tags:
+    - status
 
-- name: "INFORMATION"
+- name: Display Pi-hole cluster information
   ansible.builtin.debug:
     msg:
-      - "Make sure to point your DNS server settings here:"
-      - "DNSv4: {{ pihole_local_ipv4 }}"
-      - "DNSv6: {{ pihole_local_ipv6 }}"
+      - "Pi-hole cluster is ready!"
+      - "Point your DNS server settings to:"
+      - "  DNSv4: {{ _status_vip_ipv4 }}"
+      - "  DNSv6: {{ _status_vip_ipv6 }}"
   when: inventory_hostname in groups['master']
+  changed_when: false
+  tags:
+    - status
