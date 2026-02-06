@@ -22,7 +22,12 @@ Installs and configures keepalived for Pi-hole high availability using VRRP.
 | `keepalived_check_rise` | `2` | Successes before marking UP |
 | `priority` | **required** | VRRP priority (host variable) |
 
-**Note:** IPv6 configuration uses global variables `ipv6_enabled` and `ipv6_vip`.
+**Global variables (shared across roles):**
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `ipv6_enabled` | `false` | Enable IPv6 support |
+| `ipv6_vip` | `fe80::53/64` | IPv6 virtual IP address (CIDR notation) |
 
 ## Dependencies
 

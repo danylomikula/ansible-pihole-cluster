@@ -9,6 +9,18 @@ argument_specs:
       - Generates pihole.toml configuration
       - Configures web interface password securely
     options:
+      # Global IPv6 settings (shared across roles)
+      ipv6_enabled:
+        type: bool
+        required: false
+        default: false
+        description: Enable IPv6 support (affects pihole, keepalived, status roles)
+      ipv6_vip:
+        type: str
+        required: false
+        default: "fe80::53/64"
+        description: IPv6 virtual IP address with CIDR notation
+
       # Installation
       pihole_version:
         type: str

@@ -289,7 +289,7 @@
     _pihole_reboot_after_run: true
   changed_when: true
   run_once: true
-  when: pihole_reboot_after_run | default(reboot_after_run | default(true))
+  when: pihole_reboot_after_run | default(true)
   notify: Reboot cluster in order
   tags:
     - pihole

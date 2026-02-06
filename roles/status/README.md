@@ -9,7 +9,16 @@ Verifies Pi-hole cluster service status.
 
 ## Role Variables
 
-None.
+No role-specific variables.
+
+**Global variables used:**
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `ipv6_enabled` | `false` | Enable IPv6 support |
+| `ipv6_vip` | `fe80::53/64` | IPv6 virtual IP address |
+| `keepalived_vip_ipv4` | `10.20.0.53/16` | IPv4 virtual IP address |
+| `unbound_enabled` | `true` | Check unbound service status |
 
 Status output is printed on hosts in the `master` group.
 

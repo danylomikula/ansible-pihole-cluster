@@ -25,6 +25,13 @@ Installs and configures Pi-hole DNS sinkhole.
 
 See `defaults/main.yml` for all available variables.
 
+**Global variables (shared across roles):**
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `ipv6_enabled` | `false` | Enable IPv6 support |
+| `ipv6_vip` | `fe80::53/64` | IPv6 virtual IP address (CIDR notation) |
+
 ## Dependencies
 
 None
