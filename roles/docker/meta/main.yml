@@ -13,7 +13,7 @@ argument_specs:
       nebula_sync_enabled:
         type: bool
         required: false
-        default: false
+        default: true
         description: Enable Docker installation (required for nebula-sync)
       docker_install_packages:
         type: list

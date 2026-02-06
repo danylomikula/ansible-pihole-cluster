@@ -2,7 +2,7 @@
 # Docker role defaults
 
 # Enable Docker installation (required for nebula-sync)
-nebula_sync_enabled: false
+nebula_sync_enabled: true
 
 # Docker packages to install on RedHat-based systems
 docker_install_packages:

@@ -30,7 +30,7 @@ None
 - hosts: pihole_cluster
   roles:
     - role: danylomikula.ansible_pihole_cluster.docker
-      when: nebula_sync_enabled | default(false)
+      when: nebula_sync_enabled | default(true)
 ```
 
 ## License

@@ -1,7 +1,7 @@
 ---
 - name: Docker installation
   when:
-    - nebula_sync_enabled | default(false)
+    - nebula_sync_enabled | default(true)
     - inventory_hostname in groups['master']
   tags:
     - docker
