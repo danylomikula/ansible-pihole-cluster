@@ -1,0 +1,58 @@
+---
+dependencies: []
+
+argument_specs:
+  main:
+    short_description: Install and configure unbound recursive DNS
+    description:
+      - Installs unbound as a recursive DNS resolver
+      - Configures unbound to work with Pi-hole
+      - Sets up EDNS buffer size for optimal performance
+    options:
+      unbound_enabled:
+        type: bool
+        required: false
+        default: true
+        description: Enable unbound installation
+      unbound_verbosity:
+        type: int
+        required: false
+        default: 0
+        choices:
+          - 0
+          - 1
+          - 2
+          - 3
+          - 4
+          - 5
+        description: Logging verbosity level (0-5)
+      unbound_interface:
+        type: str
+        required: false
+        default: "127.0.0.1"
+        description: Interface for unbound to listen on
+      unbound_port:
+        type: int
+        required: false
+        default: 5335
+        description: Port for unbound to listen on
+      unbound_num_threads:
+        type: int
+        required: false
+        default: 1
+        description: Number of unbound threads
+      unbound_edns_buffer_size:
+        type: int
+        required: false
+        default: 1232
+        description: EDNS buffer size in bytes
+      unbound_so_rcvbuf:
+        type: str
+        required: false
+        default: "1m"
+        description: SO_RCVBUF socket buffer size
+      unbound_private_domain:
+        type: str
+        required: false
+        default: "homelab.local"
+        description: Private domain for local resolution

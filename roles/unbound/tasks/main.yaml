@@ -1,78 +1,88 @@
+---
 - name: Install unbound
   ansible.builtin.package:
     name: unbound
     state: present
+  tags:
+    - unbound
 
-- name: Enable unbound
-  ansible.builtin.service:
-    name: unbound
-    enabled: true
-
-- name: Create unbound config
+- name: Create unbound configuration
   ansible.builtin.template:
     dest: /etc/unbound/unbound.conf
     src: pi-hole.conf.j2
     mode: "0644"
   notify: Restart unbound service
+  tags:
+    - unbound
 
-- name: Flush handlers
-  ansible.builtin.meta: flush_handlers
-
-- name: Ensures /etc/dnsmasq.d dir exists
+- name: Ensure dnsmasq.d directory exists
   ansible.builtin.file:
     path: /etc/dnsmasq.d
     state: directory
-    mode: "0644"
+    mode: "0755"
+  tags:
+    - unbound
 
-- name: Create 99-edns.conf config
+- name: Deploy EDNS configuration
   ansible.builtin.copy:
     src: 99-edns.conf
     dest: /etc/dnsmasq.d/99-edns.conf
     mode: "0644"
   notify: Restart unbound service
-
-- name: Populate service facts
-  ansible.builtin.service_facts:
-
-- name: Disable unbound-resolvconf service if exists
-  ansible.builtin.systemd_service:
-    name: unbound-resolvconf
-    enabled: false
-  when: "'unbound-resolvconf.service' in ansible_facts.services"
+  tags:
+    - unbound
 
 - name: Check if resolvconf.conf exists
   ansible.builtin.stat:
     path: /etc/resolvconf.conf
-  register: resolvconf
+  register: _unbound_resolvconf_exists
   changed_when: false
+  tags:
+    - unbound
 
-- name: Check if unbound resolvconf_resolvers.conf exists
-  ansible.builtin.stat:
-    path: /etc/unbound/unbound.conf.d/resolvconf_resolvers.conf
-  register: unbound_resolvconf
-  changed_when: false
-
-- name: Disable the file resolvconf_resolvers.conf
+- name: Disable resolvconf unbound integration
   ansible.builtin.lineinfile:
     path: /etc/resolvconf.conf
     regexp: '^unbound_conf='
     line: '#unbound_conf='
-  when: resolvconf.stat.exists
+  when: _unbound_resolvconf_exists.stat.exists
+  tags:
+    - unbound
+
+- name: Check if unbound resolvconf_resolvers.conf exists
+  ansible.builtin.stat:
+    path: /etc/unbound/unbound.conf.d/resolvconf_resolvers.conf
+  register: _unbound_resolvconf
+  changed_when: false
+  tags:
+    - unbound
 
 - name: Remove unbound resolvconf_resolvers.conf
   ansible.builtin.file:
     path: /etc/unbound/unbound.conf.d/resolvconf_resolvers.conf
     state: absent
-  when: unbound_resolvconf.stat.exists
+  when: _unbound_resolvconf.stat.exists
   notify: Restart unbound service
+  tags:
+    - unbound
 
-- name: Check if unbound service is running
+- name: Ensure unbound service is started and enabled
   ansible.builtin.systemd:
     name: unbound
-  register: unbound_status
-  retries: 10
-  delay: 5
-  until: unbound_status.status.ActiveState == 'active'
+    state: started
+    enabled: true
+  tags:
+    - unbound
 
 - name: Flush handlers
   ansible.builtin.meta: flush_handlers
+
+- name: Verify unbound service is running
+  ansible.builtin.systemd:
+    name: unbound
+  register: _unbound_status
+  retries: 5
+  delay: 3
+  until: _unbound_status.status.ActiveState == 'active'
+  tags:
+    - unbound

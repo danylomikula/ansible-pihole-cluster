@@ -1,0 +1,22 @@
+---
+# Unbound role defaults
+# https://docs.pi-hole.net/guides/dns/unbound/
+
+# Enable unbound recursive DNS resolver
+unbound_enabled: true
+
+# Logging verbosity (0-5)
+# https://docs.pi-hole.net/guides/dns/unbound/#add-logging-to-unbound
+unbound_verbosity: 0
+
+# Listening interface and port
+unbound_interface: "127.0.0.1"
+unbound_port: 5335
+
+# Performance settings
+unbound_num_threads: 1
+unbound_edns_buffer_size: 1232
+unbound_so_rcvbuf: "1m"
+
+# Private domain for local resolution
+unbound_private_domain: "{{ pihole_local_domain | default('homelab.local') }}"

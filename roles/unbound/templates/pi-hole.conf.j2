@@ -3,14 +3,15 @@ server:
     # logfile: "/var/log/unbound/unbound.log"
     verbosity: {{ unbound_verbosity }}
 
-	chroot: ""
+    chroot: ""
 
     directory: "/etc/unbound"
     username: "unbound"
     pidfile: "/run/unbound.pid"
 
-    interface: 127.0.0.1
-    port: 5335
+    interface: {{ unbound_interface }}
+    interface: ::1
+    port: {{ unbound_port }}
     do-ip4: yes
     do-udp: yes
     do-tcp: yes
@@ -51,17 +52,17 @@ server:
     # trigger fragmentation on typical network links. DNS servers can switch
     # from UDP to TCP when a DNS response is too big to fit in this limited
     # buffer size. This value has also been suggested in DNS Flag Day 2020.
-    edns-buffer-size: 1232
+    edns-buffer-size: {{ unbound_edns_buffer_size }}
 
     # Perform prefetching of close to expired message cache entries
     # This only applies to domains that have been frequently queried
     prefetch: yes
 
     # One thread should be sufficient, can be increased on beefy machines. In reality for most users running on small networks or on a single machine, it should be unnecessary to seek performance enhancement by increasing num-threads above 1.
-    num-threads: 1
+    num-threads: {{ unbound_num_threads }}
 
     # Ensure kernel buffer is large enough to not lose messages in traffic spikes
-    so-rcvbuf: 1m
+    so-rcvbuf: {{ unbound_so_rcvbuf }}
 
     # Ensure privacy of local IP ranges
     private-address: 192.168.0.0/16
@@ -78,6 +79,6 @@ server:
     private-address: 255.255.255.255/32
     private-address: 2001:db8::/32
 
-	# Allow the domain (and its subdomains) to contain private addresses.
-	# local-data statements are allowed to contain private addresses too.
-	private-domain: "{{ pihole_local_domain }}"
+    # Allow the domain (and its subdomains) to contain private addresses.
+    # local-data statements are allowed to contain private addresses too.
+    private-domain: "{{ unbound_private_domain }}"
