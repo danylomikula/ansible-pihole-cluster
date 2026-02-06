@@ -1,3 +1,4 @@
+---
 - name: Reboot after Docker installation
   ansible.builtin.reboot:
     msg: "Rebooting machine"

@@ -1,76 +1,72 @@
-- name: Check if Docker is installed
-  ansible.builtin.command:
-    cmd: which docker
-  register: docker_check
-  changed_when: false
-  failed_when: false
+---
+- name: Docker installation
   when:
+    - nebula_sync_enabled | default(false)
     - inventory_hostname in groups['master']
+  tags:
+    - docker
+  block:
+    - name: Check if Docker is installed
+      ansible.builtin.command:
+        cmd: which docker
+      register: _docker_check
+      changed_when: false
+      failed_when: false
 
-- name: Download Docker convenience script
-  ansible.builtin.get_url:
-    url: "https://get.docker.com"
-    dest: "/tmp/get-docker.sh"
-    mode: "0755"
-  when:
-    - inventory_hostname in groups['master']
-    - docker_check.rc != 0
-    - ansible_os_family == "Debian"
+    - name: Install Docker on Debian-based systems
+      when:
+        - _docker_check.rc != 0
+        - ansible_os_family == "Debian"
+      block:
+        - name: Download Docker convenience script
+          ansible.builtin.get_url:
+            url: "https://get.docker.com"
+            dest: "/tmp/get-docker.sh"
+            mode: "0755"
 
-- name: Install Docker
-  ansible.builtin.command:
-    cmd: "/tmp/get-docker.sh"
-  register: docker_install_result
-  changed_when: false
-  notify: Reboot after Docker installation
-  when:
-    - inventory_hostname in groups['master']
-    - docker_check.rc != 0
-    - ansible_os_family == "Debian"
+        - name: Execute Docker installation script
+          ansible.builtin.command:
+            cmd: "/tmp/get-docker.sh"
+          register: _docker_install_result
+          changed_when: "'is already installed' not in (_docker_install_result.stdout | default(''))"
+          notify: Reboot after Docker installation
 
-- name: Display Docker installation process
-  ansible.builtin.debug:
-    var: docker_install_result.stdout_lines
-  when:
-    - inventory_hostname in groups['master']
-    - docker_check.rc != 0
-    - ansible_os_family == "Debian"
+        - name: Display Docker installation result
+          ansible.builtin.debug:
+            var: _docker_install_result.stdout_lines
+          when: _docker_install_result.stdout_lines is defined
 
-- name: Add Docker CE repository [RedHat]
-  ansible.builtin.yum_repository:
-    name: docker-ce
-    description: Docker CE Repository
-    baseurl: "https://download.docker.com/linux/centos/10/$basearch/stable"
-    enabled: true
-    gpgcheck: true
-    gpgkey: "https://download.docker.com/linux/centos/gpg"
-  when:
-    - inventory_hostname in groups['master']
-    - docker_check.rc != 0
-    - ansible_os_family == "RedHat"
+        - name: Clean up Docker installation script
+          ansible.builtin.file:
+            path: "/tmp/get-docker.sh"
+            state: absent
 
-- name: Install Docker
-  ansible.builtin.package:
-    name:
-      - docker-ce
-      - docker-ce-cli
-      - containerd.io
-      - docker-buildx-plugin
-      - docker-compose-plugin
-    state: present
-  notify: Reboot after Docker installation
-  when:
-    - inventory_hostname in groups['master']
-    - docker_check.rc != 0
+    - name: Install Docker on RedHat-based systems
+      when:
+        - _docker_check.rc != 0
+        - ansible_os_family == "RedHat"
+      block:
+        - name: Add Docker CE repository
+          ansible.builtin.yum_repository:
+            name: docker-ce
+            description: Docker CE Repository
+            baseurl: "https://download.docker.com/linux/centos/$releasever/$basearch/stable"
+            enabled: true
+            gpgcheck: true
+            gpgkey: "https://download.docker.com/linux/centos/gpg"
 
-- name: Enable & start Docker
-  ansible.builtin.systemd:
-    name: docker
-    state: started
-    enabled: true
-  when:
-    - inventory_hostname in groups['master']
-    - docker_check.rc != 0
+        - name: Install Docker packages
+          ansible.builtin.package:
+            name: "{{ docker_install_packages }}"
+            state: present
+          notify: Reboot after Docker installation
+
+    - name: Enable and start Docker service
+      when: _docker_check.rc != 0
+      ansible.builtin.systemd:
+        name: docker
+        state: started
+        enabled: true
 
 - name: Flush handlers
   ansible.builtin.meta: flush_handlers
