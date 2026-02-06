@@ -1,0 +1,25 @@
+---
+# Update Pi-hole Cluster
+# Updates system packages, Pi-hole version, and Nebula Sync version
+# Usage: ansible-playbook update_cluster.yml
+
+- name: Update Pi-hole Cluster
+  hosts: pihole_cluster
+  become: true
+  serial: 1  # Update one node at a time for zero-downtime
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+  roles:
+    # System package updates
+    - role: updates
+      when: updates_enabled | default(true)
+
+    # Pi-hole update (re-runs installer with new version)
+    - role: pihole
+
+    # Nebula Sync update (pulls new container version)
+    - role: nebula_sync
+      when: nebula_sync_enabled | default(true)
+
+    # Verify services
+    - role: status
