@@ -1,35 +1,50 @@
-- name: Update packages [Debian]
-  ansible.builtin.apt:
-    force_apt_get: true
-    autoclean: true
-    autoremove: true
-    update_cache: true
-    upgrade: dist
-  when: ansible_os_family == "Debian"
-
-- name: Check if reboot is needed [Debian]
-  ansible.builtin.stat:
-    path: /var/run/reboot-required
-  register: reboot_required
-  when: ansible_os_family == "Debian"
-
-- name: Reboot [Debian]
-  ansible.builtin.reboot:
-    msg: "Rebooting machine in 5 seconds"
+---
+- name: Update packages on Debian-based systems
   when:
+    - updates_enabled | default(true)
     - ansible_os_family == "Debian"
-    - reboot_required.stat.exists
+  tags:
+    - updates
+  block:
+    - name: Update apt packages
+      ansible.builtin.apt:
+        force_apt_get: true
+        autoclean: true
+        autoremove: true
+        update_cache: true
+        upgrade: dist
 
-- name: Update packages [RedHat]
-  ansible.builtin.dnf:
-    name: "*"
-    state: latest
-    update_only: true
-    update_cache: true
-  when: ansible_os_family == "RedHat"
+    - name: Check if reboot is required
+      ansible.builtin.stat:
+        path: /var/run/reboot-required
+      register: _updates_reboot_required
 
-- name: Reboot [RedHat]
-  ansible.builtin.reboot:
-    msg: "Rebooting machine in 5 seconds"
-  become: true
-  when: ansible_os_family == "RedHat"
+    - name: Reboot if required
+      ansible.builtin.reboot:
+        msg: "Rebooting after system updates"
+      when:
+        - updates_reboot | default(true)
+        - _updates_reboot_required.stat.exists
+
+- name: Update packages on RedHat-based systems
+  when:
+    - updates_enabled | default(true)
+    - ansible_os_family == "RedHat"
+  tags:
+    - updates
+  block:
+    - name: Update dnf packages
+      ansible.builtin.dnf:
+        name: "*"
+        state: latest  # noqa: package-latest
+        update_only: true
+        update_cache: true
+
+    - name: Clean dnf cache
+      ansible.builtin.dnf:
+        autoremove: true
+
+    - name: Reboot after updates
+      ansible.builtin.reboot:
+        msg: "Rebooting after system updates"
+      when: updates_reboot | default(true)

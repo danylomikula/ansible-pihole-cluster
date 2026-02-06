@@ -1,0 +1,21 @@
+---
+dependencies: []
+
+argument_specs:
+  main:
+    short_description: Update system packages
+    description:
+      - Updates all system packages
+      - Handles reboot if required
+      - Cleans up package cache automatically
+    options:
+      updates_enabled:
+        type: bool
+        required: false
+        default: true
+        description: Enable system updates
+      updates_reboot:
+        type: bool
+        required: false
+        default: true
+        description: Reboot after updates if required
