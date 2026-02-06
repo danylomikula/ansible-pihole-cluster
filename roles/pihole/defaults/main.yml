@@ -1,0 +1,92 @@
+---
+# Pi-hole role defaults
+
+# Pi-hole version to install
+# https://github.com/pi-hole/pi-hole/releases
+pihole_version: "6.3"
+
+# Reboot cluster in order after Pi-hole install (master -> backup)
+pihole_reboot_after_run: true
+pihole_reboot_timeout: 900
+
+# Web interface password (REQUIRED - use ansible-vault)
+# pihole_web_password: ""
+
+# Web interface settings
+pihole_web_domain: "{{ ansible_hostname }}.{{ pihole_local_domain }}"
+pihole_web_port: "80o,443os,[::]:80o,[::]:443os"
+pihole_web_session_timeout: 1800
+pihole_web_boxed_layout: true
+pihole_web_theme: "default-auto"
+pihole_web_acl: ""
+
+# Web TLS settings (optional)
+pihole_web_tls_cert: ""  # Path to TLS certificate
+
+# Web paths (optional)
+pihole_web_paths_webhome: ""  # Custom web home path
+pihole_web_paths_prefix: ""   # URL prefix (e.g., "/admin")
+
+# DNS settings
+pihole_local_domain: "homelab.local"
+pihole_local_domain_local: true  # Keep queries local to this domain
+pihole_interface: ""  # Leave empty for auto-detection
+pihole_socket_listening: "ALL"
+pihole_query_logging: true
+pihole_privacy_level: "0"
+
+# Upstream DNS servers (ignored when unbound is enabled)
+pihole_upstream_dns:
+  - "1.1.1.1"
+  - "1.0.0.1"
+
+# DNS behavior
+pihole_cname_deep_inspect: true
+pihole_block_esni: true
+pihole_edns0_ecs: true
+pihole_ignore_localhost: false
+pihole_domain_needed: false
+pihole_bogus_priv: true
+pihole_dns_cache_size: 10000
+pihole_dnssec: false
+pihole_show_dnssec: true
+
+# Client resolution
+pihole_resolve_ipv4: true
+pihole_resolve_ipv6: true
+pihole_network_names: true
+pihole_refresh_names: "IPV4_ONLY"
+
+# Rate limiting
+pihole_rate_limit_count: 1000
+pihole_rate_limit_interval: 60
+
+# Behavior settings
+pihole_reply_when_busy: "DROP"
+pihole_block_mozilla_canary: true
+pihole_block_icloud_pr: true
+pihole_ptr: "HOSTNAMEFQDN"
+
+# Database settings
+pihole_max_db_days: 91
+pihole_db_interval: 60
+
+# NTP sync settings (external NTP server)
+pihole_ntp_sync_active: true
+pihole_ntp_sync_server: "time.cloudflare.com"
+pihole_ntp_sync_interval: 3600
+pihole_ntp_sync_count: 8
+
+# Optional: Conditional forwarding (reverse DNS)
+# pihole_rev_servers:
+#   - cidr: "10.0.20.0/24"
+#     target: "10.0.20.1"
+#     domain: "homelab.local"
+
+# Optional: Custom DNS records
+# local_dns_records: |
+#   10.0.20.88 node.homelab.local
+
+# Optional: Custom CNAME records
+# local_cname_records: |
+#   node.homelab.local,webserver.homelab.local

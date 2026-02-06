@@ -1,0 +1,15 @@
+---
+- name: Restart pihole-FTL
+  ansible.builtin.systemd:
+    name: pihole-FTL
+    state: restarted
+  listen: Restart pihole-FTL service
+
+- name: Wait for pihole-FTL to start
+  ansible.builtin.pause:
+    seconds: 3
+  listen: Restart pihole-FTL service
+
+- name: Reboot cluster in order
+  ansible.builtin.include_tasks: reboot_cluster.yml
+  run_once: true

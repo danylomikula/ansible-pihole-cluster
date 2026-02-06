@@ -1,10 +1,22 @@
+{# v3.0.0 - Uses new variable names only #}
+{# For migration from v2, see playbooks/vars/migration_v2_to_v3.yml #}
+{# IPv6: uses global ipv6_* vars with fallback to role-specific vars for backwards compatibility #}
+{% set _enable_unbound = unbound_enabled | default(true) %}
+{% set _enable_ipv6 = ipv6_enabled | default(false) %}
+{% set _vip_ipv4 = keepalived_vip_ipv4 | default('10.20.0.53/16') %}
+{% set _vip_ipv6 = ipv6_vip | default('fe80::53/64') %}
+
+# =============================================================================
+# DNS CONFIGURATION
+# =============================================================================
 [dns]
   upstreams = [
-{% if enable_unbound %}
+{% if _enable_unbound %}
     "127.0.0.1#5335"
 {% else %}
 {% for dns_server in pihole_upstream_dns %}
     "{{ dns_server }}"{% if not loop.last %},{% endif %}
+
 {% endfor %}
 {% endif %}
   ]
@@ -18,27 +30,33 @@
   hosts = [
 {% for line in (local_dns_records | default('')).split('\n') if line.strip() %}
     "{{ line.strip() }}"{% if not loop.last %},{% endif %}
+
 {% endfor %}
   ]
   domainNeeded = {{ pihole_domain_needed | lower }}
-  domain = "{{ pihole_local_domain | lower }}"
   bogusPriv = {{ pihole_bogus_priv | lower }}
   dnssec = {{ pihole_dnssec | lower }}
-  interface = "{{ pihole_interface | lower }}"
+  interface = "{{ pihole_interface }}"
   listeningMode = "{{ pihole_socket_listening }}"
   queryLogging = {{ pihole_query_logging | lower }}
   cnameRecords = [
 {% for line in (local_cname_records | default('')).split('\n') if line.strip() %}
     "{{ line.strip() }}"{% if not loop.last %},{% endif %}
+
 {% endfor %}
   ]
 {% if pihole_rev_servers is defined and pihole_rev_servers|length > 0 %}
   revServers = [
 {% for rs in pihole_rev_servers %}
     "true,{{ rs.cidr }},{{ rs.target }}{% if rs.domain %},{{ rs.domain }}{% endif %}"{% if not loop.last %},{% endif %}
+
 {% endfor %}
   ]
 {% endif %}
+
+  [dns.domain]
+    name = "{{ pihole_local_domain }}"
+    local = {{ pihole_local_domain_local | default(true) | lower }}
 
   [dns.cache]
     size = {{ pihole_dns_cache_size }}
@@ -47,58 +65,53 @@
     mozillaCanary = {{ pihole_block_mozilla_canary | lower }}
     iCloudPrivateRelay = {{ pihole_block_icloud_pr | lower }}
 
-    [dns.reply.host]
-      force4 = {{ (pihole_vip_ipv4 | length > 0) | lower }}
-      IPv4 = "{{ pihole_vip_ipv4 | regex_replace('/.*', '') if pihole_vip_ipv4 | length > 0 else '' }}"
+  [dns.reply.host]
+    force4 = {{ (_vip_ipv4 | length > 0) | lower }}
+    IPv4 = "{{ _vip_ipv4 | regex_replace('/.*', '') if _vip_ipv4 | length > 0 else '' }}"
+    force6 = {% if _enable_ipv6 and (_vip_ipv6 | length > 0) %}true{% else %}false{% endif %}
 
-      force6 = {% if enable_ipv6_support and (pihole_vip_ipv6 | length > 0) %}true{% else %}false{% endif %}
+    IPv6 = "{{ _vip_ipv6 | regex_replace('/.*', '') if _enable_ipv6 and _vip_ipv6 | length > 0 else '' }}"
 
-      IPv6 = "{{ pihole_vip_ipv6 | regex_replace('/.*', '') if enable_ipv6_support and pihole_vip_ipv6 | length > 0 else '' }}"
+  [dns.reply.blocking]
+    force4 = {{ (_vip_ipv4 | length > 0) | lower }}
+    IPv4 = "{{ _vip_ipv4 | regex_replace('/.*', '') if _vip_ipv4 | length > 0 else '' }}"
+    force6 = {% if _enable_ipv6 and (_vip_ipv6 | length > 0) %}true{% else %}false{% endif %}
 
-    [dns.reply.blocking]
-      force4 = {{ (pihole_vip_ipv4 | length > 0) | lower }}
-      IPv4 = "{{ pihole_vip_ipv4 | regex_replace('/.*', '') if pihole_vip_ipv4 | length > 0 else '' }}"
-
-      force6 = {% if enable_ipv6_support and (pihole_vip_ipv6 | length > 0) %}true{% else %}false{% endif %}
-
-      IPv6 = "{{ pihole_vip_ipv6 | regex_replace('/.*', '') if enable_ipv6_support and pihole_vip_ipv6 | length > 0 else '' }}"
+    IPv6 = "{{ _vip_ipv6 | regex_replace('/.*', '') if _enable_ipv6 and _vip_ipv6 | length > 0 else '' }}"
 
   [dns.rateLimit]
     count = {{ pihole_rate_limit_count }}
     interval = {{ pihole_rate_limit_interval }}
 
-[dhcp]
-  active = false
-
-  [ntp.ipv4]
-    active = {{ pihole_ntp_ipv4_active | lower }}
-    address = "{{ pihole_ntp_ipv4_address }}"
-
-  [ntp.ipv6]
-    active = {{ pihole_ntp_ipv6_active | lower }}
-    address = "{{ pihole_ntp_ipv6_address }}"
-
+# =============================================================================
+# NTP SYNC CONFIGURATION
+# =============================================================================
+[ntp]
   [ntp.sync]
-    active = {{ pihole_ntp_sync_active | lower }}
+    active = {{ pihole_ntp_sync_active | default(true) | lower }}
     server = "{{ pihole_ntp_sync_server }}"
     interval = {{ pihole_ntp_sync_interval }}
-    count = {{ pihole_ntp_sync_count }}
+    count = {{ pihole_ntp_sync_count | default(8) }}
 
-  [ntp.sync.rtc]
-    set = {{ pihole_ntp_sync_rtc_set | lower }}
-    device = "{{ pihole_ntp_sync_rtc_device }}"
-    utc = {{ pihole_ntp_sync_rtc_utc | lower }}
-
+# =============================================================================
+# RESOLVER CONFIGURATION
+# =============================================================================
 [resolver]
   resolveIPv4 = {{ pihole_resolve_ipv4 | lower }}
   resolveIPv6 = {{ pihole_resolve_ipv6 | lower }}
   networkNames = {{ pihole_network_names | lower }}
   refreshNames = "{{ pihole_refresh_names }}"
 
+# =============================================================================
+# DATABASE CONFIGURATION
+# =============================================================================
 [database]
   maxDBdays = {{ pihole_max_db_days }}
   DBinterval = {{ pihole_db_interval }}
 
+# =============================================================================
+# WEBSERVER CONFIGURATION
+# =============================================================================
 [webserver]
   domain = "{{ pihole_web_domain }}"
   acl = "{{ pihole_web_acl }}"
@@ -107,9 +120,27 @@
   [webserver.session]
     timeout = {{ pihole_web_session_timeout }}
 
+{% if pihole_web_tls_cert | default('') | length > 0 %}
+  [webserver.tls]
+    cert = "{{ pihole_web_tls_cert }}"
+
+{% endif %}
+{% if (pihole_web_paths_webhome | default('') | length > 0) or (pihole_web_paths_prefix | default('') | length > 0) %}
+  [webserver.paths]
+{% if pihole_web_paths_webhome | default('') | length > 0 %}
+    webhome = "{{ pihole_web_paths_webhome }}"
+{% endif %}
+{% if pihole_web_paths_prefix | default('') | length > 0 %}
+    prefix = "{{ pihole_web_paths_prefix }}"
+{% endif %}
+
+{% endif %}
   [webserver.interface]
     boxed = {{ pihole_web_boxed_layout | lower }}
     theme = "{{ pihole_web_theme }}"
 
+# =============================================================================
+# MISC CONFIGURATION
+# =============================================================================
 [misc]
   privacylevel = {{ pihole_privacy_level }}
