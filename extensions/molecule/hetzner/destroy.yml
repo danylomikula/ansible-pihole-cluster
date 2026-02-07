@@ -1,0 +1,93 @@
+---
+- name: Destroy Hetzner instances for Molecule Pi-hole cluster
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    hcloud_token: "{{ lookup('env', 'HCLOUD_TOKEN') }}"
+    molecule_state_file: "{{ molecule_ephemeral_directory }}/hcloud_state.yml"
+
+  tasks:
+    - name: Check if Molecule Hetzner state file exists
+      ansible.builtin.stat:
+        path: "{{ molecule_state_file }}"
+      register: _molecule_hcloud_state_file
+
+    - name: Load Molecule Hetzner state
+      ansible.builtin.include_vars:
+        file: "{{ molecule_state_file }}"
+      when: _molecule_hcloud_state_file.stat.exists
+
+    - name: Ensure HCLOUD_TOKEN is set when destroying existing resources
+      ansible.builtin.assert:
+        that:
+          - hcloud_token | length > 0
+        fail_msg: "HCLOUD_TOKEN is required to destroy existing Hetzner resources."
+      when: _molecule_hcloud_state_file.stat.exists
+
+    - name: Delete Hetzner servers
+      ansible.builtin.command:
+        cmd: hcloud server delete "{{ item.server_id }}"
+      loop: "{{ servers | default([]) }}"
+      register: _molecule_server_delete
+      changed_when: _molecule_server_delete.rc == 0
+      failed_when: >-
+        (_molecule_server_delete.rc != 0)
+        and ('not found' not in (_molecule_server_delete.stderr | lower))
+      when:
+        - _molecule_hcloud_state_file.stat.exists
+        - servers is defined
+      environment:
+        HCLOUD_TOKEN: "{{ hcloud_token }}"
+
+    - name: Delete Hetzner private network
+      ansible.builtin.command:
+        cmd: hcloud network delete "{{ network_name }}"
+      register: _molecule_network_delete
+      changed_when: _molecule_network_delete.rc == 0
+      failed_when: >-
+        (_molecule_network_delete.rc != 0)
+        and ('not found' not in (_molecule_network_delete.stderr | lower))
+      when:
+        - _molecule_hcloud_state_file.stat.exists
+        - network_name is defined
+        - network_name | length > 0
+      environment:
+        HCLOUD_TOKEN: "{{ hcloud_token }}"
+
+    - name: Delete Hetzner SSH key
+      ansible.builtin.command:
+        cmd: hcloud ssh-key delete "{{ ssh_key_name }}"
+      register: _molecule_ssh_key_delete
+      changed_when: _molecule_ssh_key_delete.rc == 0
+      failed_when: >-
+        (_molecule_ssh_key_delete.rc != 0)
+        and ('not found' not in (_molecule_ssh_key_delete.stderr | lower))
+      when:
+        - _molecule_hcloud_state_file.stat.exists
+        - ssh_key_name is defined
+        - ssh_key_name | length > 0
+      environment:
+        HCLOUD_TOKEN: "{{ hcloud_token }}"
+
+    - name: Remove Molecule temporary SSH key files
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "{{ ssh_key_path | default('') }}"
+        - "{{ (ssh_key_path | default('')) ~ '.pub' }}"
+      when:
+        - _molecule_hcloud_state_file.stat.exists
+        - ssh_key_path is defined
+        - ssh_key_path | length > 0
+
+    - name: Remove Molecule instance config
+      ansible.builtin.file:
+        path: "{{ molecule_instance_config }}"
+        state: absent
+
+    - name: Remove Molecule Hetzner state file
+      ansible.builtin.file:
+        path: "{{ molecule_state_file }}"
+        state: absent

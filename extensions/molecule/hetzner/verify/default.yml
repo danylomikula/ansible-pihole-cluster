@@ -1,0 +1,277 @@
+---
+# Verify playbook for default scenario
+# Tests full Pi-hole cluster functionality on Hetzner
+
+- name: Load Hetzner state
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: Load Hetzner state file
+      ansible.builtin.include_vars:
+        file: "{{ molecule_ephemeral_directory }}/hcloud_state.yml"
+        name: hcloud_state
+
+    - name: Set cluster facts for all hosts
+      ansible.builtin.set_fact:
+        _hcloud_state: "{{ hcloud_state }}"
+      delegate_to: "{{ item }}"
+      delegate_facts: true
+      loop: "{{ groups['pihole_cluster'] }}"
+
+    - name: Display SSH connection info for debugging
+      ansible.builtin.debug:
+        msg:
+          - "========================================"
+          - "SSH CONNECTION INFO (for debugging)"
+          - "========================================"
+          - "SSH Key: {{ hcloud_state.ssh_key_path }}"
+          - "Master: ssh -i {{ hcloud_state.ssh_key_path }} -o StrictHostKeyChecking=no root@{{ hcloud_state.servers[0].public_ip }}"
+          - "Backup: ssh -i {{ hcloud_state.ssh_key_path }} -o StrictHostKeyChecking=no root@{{ hcloud_state.servers[1].public_ip }}"
+          - "Private IPs: Master={{ hcloud_state.servers[0].private_ip }}, Backup={{ hcloud_state.servers[1].private_ip }}"
+          - "VIP: {{ hcloud_state.keepalived_vip }}"
+          - "========================================"
+      when: lookup('env', 'MOLECULE_DEBUG_PAUSE') | default('false') | lower in ['true', '1', 'yes']
+
+    - name: Pause for manual debugging (set MOLECULE_DEBUG_PAUSE=true to enable)
+      ansible.builtin.pause:
+        prompt: "Press Enter to continue with verification (or Ctrl+C to abort and keep instances running)"
+      when: lookup('env', 'MOLECULE_DEBUG_PAUSE') | default('false') | lower in ['true', '1', 'yes']
+
+- name: Verify Pi-hole cluster (default scenario)
+  hosts: pihole_cluster
+  become: true
+  gather_facts: true
+
+  vars:
+    _vip_ipv4: "{{ _hcloud_state.keepalived_vip }}"
+    _enable_unbound: true
+    _enable_updatelists: true
+    _enable_nebula_sync: true
+
+  tasks:
+    # ============================================
+    # SERVICE STATUS CHECKS
+    # ============================================
+    - name: Check if Pi-hole FTL service is running
+      ansible.builtin.systemd:
+        name: pihole-FTL
+      register: _pihole_ftl_status
+      failed_when: _pihole_ftl_status.status.ActiveState != 'active'
+
+    - name: Check if keepalived service is running
+      ansible.builtin.systemd:
+        name: keepalived
+      register: _keepalived_status
+      failed_when: _keepalived_status.status.ActiveState != 'active'
+
+    - name: Check if unbound service is running
+      ansible.builtin.systemd:
+        name: unbound
+      register: _unbound_status
+      when: _enable_unbound
+
+    - name: Check if Docker service is running (for Nebula Sync)
+      ansible.builtin.systemd:
+        name: docker
+      register: _docker_status
+      when:
+        - _enable_nebula_sync
+        - inventory_hostname in groups['master']
+
+    # ============================================
+    # CONFIGURATION FILE EXISTENCE CHECKS
+    # ============================================
+    - name: Verify Pi-hole configuration exists
+      ansible.builtin.stat:
+        path: /etc/pihole/pihole.toml
+      register: _pihole_config
+      failed_when: not _pihole_config.stat.exists
+
+    - name: Verify keepalived configuration exists
+      ansible.builtin.stat:
+        path: /etc/keepalived/keepalived.conf
+      register: _keepalived_config
+      failed_when: not _keepalived_config.stat.exists
+
+    - name: Verify unbound configuration exists
+      ansible.builtin.stat:
+        path: /etc/unbound/unbound.conf
+      register: _unbound_config
+      when: _enable_unbound
+
+    # ============================================
+    # BINARY/EXECUTABLE CHECKS
+    # ============================================
+    - name: Verify Pi-hole binary exists
+      ansible.builtin.stat:
+        path: /usr/local/bin/pihole
+      register: _pihole_binary
+      failed_when: not _pihole_binary.stat.exists
+
+    - name: Verify keepalived check script exists
+      ansible.builtin.stat:
+        path: /etc/keepalived/check_pihole.sh
+      register: _keepalived_script
+      failed_when: not _keepalived_script.stat.exists
+
+    # ============================================
+    # NETWORK PORT CHECKS
+    # ============================================
+    - name: Check unbound is listening on port 5335
+      ansible.builtin.shell:
+        cmd: set -o pipefail && ss -tlnp 2>/dev/null | grep ':5335'
+        executable: /bin/bash
+      register: _unbound_listening
+      changed_when: false
+      failed_when: _unbound_listening.rc != 0
+      when: _enable_unbound
+
+    - name: Check Pi-hole FTL is listening on DNS port 53
+      ansible.builtin.shell:
+        cmd: set -o pipefail && ss -tulnp 2>/dev/null | grep ':53 '
+        executable: /bin/bash
+      register: _pihole_dns_listening
+      changed_when: false
+      failed_when: _pihole_dns_listening.rc != 0
+
+    - name: Check Pi-hole web interface is listening on port 80
+      ansible.builtin.shell:
+        cmd: set -o pipefail && ss -tlnp 2>/dev/null | grep ':80 '
+        executable: /bin/bash
+      register: _pihole_web_listening
+      changed_when: false
+      failed_when: _pihole_web_listening.rc != 0
+
+    # ============================================
+    # DNS RESOLUTION TESTS (cross-node testing)
+    # ============================================
+    - name: Ensure Pi-hole Gravity is up to date
+      ansible.builtin.command:
+        cmd: /usr/local/bin/pihole -g
+      register: _gravity_update
+      changed_when: false
+      retries: 3
+      delay: 10
+      until: _gravity_update.rc == 0
+
+    - name: Get peer node public IP for cross-testing
+      ansible.builtin.set_fact:
+        _peer_ip: "{{ (_hcloud_state.servers | selectattr('instance_name', 'equalto', item) | first).public_ip }}"
+      loop: "{{ groups['pihole_cluster'] }}"
+      when: item != inventory_hostname
+
+    - name: Wait for peer Pi-hole DNS to be ready
+      ansible.builtin.command:
+        cmd: "dig @{{ _peer_ip }} google.com +short +time=5 +tries=1"
+      register: _dns_ready
+      changed_when: false
+      failed_when: false
+      retries: 18
+      delay: 10
+      until: _dns_ready.rc == 0
+
+    - name: Test DNS resolution via peer node
+      ansible.builtin.command:
+        cmd: "dig @{{ _peer_ip }} google.com +short +time=10 +tries=3"
+      register: _dns_peer
+      changed_when: false
+      failed_when: _dns_peer.rc != 0
+      retries: 3
+      delay: 10
+      until: _dns_peer.rc == 0
+
+    - name: Test DNS resolution via VIP (master only)
+      ansible.builtin.command:
+        cmd: "dig @{{ _vip_ipv4 }} google.com +short +time=10 +tries=3"
+      register: _dns_vip
+      changed_when: false
+      failed_when: _dns_vip.rc != 0
+      retries: 6
+      delay: 10
+      until: _dns_vip.rc == 0
+      when: inventory_hostname in groups['master']
+
+    - name: Test unbound recursive resolver directly
+      ansible.builtin.command:
+        cmd: dig @127.0.0.1 -p 5335 google.com +short +time=10 +tries=3
+      register: _unbound_dns_test
+      changed_when: false
+      failed_when: _unbound_dns_test.rc != 0
+      when: _enable_unbound
+
+    # ============================================
+    # VIP ASSIGNMENT CHECK
+    # ============================================
+    - name: Check VIP is assigned on master
+      ansible.builtin.shell:
+        cmd: "set -o pipefail && ip addr show | grep {{ _vip_ipv4 }}"
+        executable: /bin/bash
+      register: _vip_assigned
+      changed_when: false
+      failed_when: _vip_assigned.rc != 0
+      when: inventory_hostname in groups['master']
+
+    # ============================================
+    # PIHOLE-UPDATELISTS CHECKS
+    # ============================================
+    - name: Check pihole-updatelists configuration exists
+      ansible.builtin.stat:
+        path: /etc/pihole-updatelists.conf
+      register: _updatelists_config
+      when: _enable_updatelists
+
+    - name: Check pihole-updatelists timer is active
+      ansible.builtin.systemd:
+        name: pihole-updatelists.timer
+      register: _updatelists_timer
+      when: _enable_updatelists
+      failed_when: _updatelists_timer.status.ActiveState != 'active'
+
+    # ============================================
+    # NEBULA SYNC CHECK (master only)
+    # ============================================
+    - name: Check Nebula Sync container is running
+      ansible.builtin.command:
+        cmd: docker ps --filter "name=nebula-sync" --format "{{ '{{' }}.Status{{ '}}' }}"
+      register: _nebula_sync_status
+      changed_when: false
+      failed_when: "'Up' not in _nebula_sync_status.stdout"
+      when:
+        - _enable_nebula_sync
+        - inventory_hostname in groups['master']
+
+    # ============================================
+    # PI-HOLE RUNTIME CONFIGURATION
+    # ============================================
+    - name: Get DNS upstreams
+      ansible.builtin.command:
+        cmd: pihole-FTL --config dns.upstreams
+      register: _dns_upstreams
+      changed_when: false
+
+    - name: Verify unbound is configured as upstream
+      ansible.builtin.assert:
+        that:
+          - "'127.0.0.1#5335' in _dns_upstreams.stdout"
+        fail_msg: "Unbound not configured as DNS upstream"
+        success_msg: "Unbound correctly configured as DNS upstream"
+      when: _enable_unbound
+
+    # ============================================
+    # VERIFICATION SUMMARY
+    # ============================================
+    - name: Display verification summary
+      ansible.builtin.debug:
+        msg:
+          - "========================================"
+          - "VERIFICATION SUMMARY (default scenario)"
+          - "Host: {{ inventory_hostname }}"
+          - "========================================"
+          - "Pi-hole FTL: {{ 'PASS' if _pihole_ftl_status.status.ActiveState == 'active' else 'FAIL' }}"
+          - "Keepalived: {{ 'PASS' if _keepalived_status.status.ActiveState == 'active' else 'FAIL' }}"
+          - "Unbound: {{ 'PASS' if _enable_unbound and _unbound_status.status.ActiveState == 'active' else 'SKIP' }}"
+          - "DNS via peer ({{ _peer_ip }}): {{ 'PASS' if _dns_peer.rc == 0 else 'FAIL' }}"
+          - "DNS via VIP: {{ 'PASS' if inventory_hostname in groups['master'] and _dns_vip.rc == 0 else 'SKIP (backup)' }}"
+          - "VIP assigned: {{ 'PASS' if inventory_hostname in groups['master'] and _vip_assigned.rc == 0 else 'SKIP (backup)' }}"
+          - "========================================"

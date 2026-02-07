@@ -1,0 +1,287 @@
+---
+- name: Create Hetzner instances for Molecule Pi-hole cluster
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    hcloud_token: "{{ lookup('env', 'HCLOUD_TOKEN') }}"
+    hcloud_server_type: "{{ lookup('env', 'HCLOUD_SERVER_TYPE') | default('cx33', true) }}"
+    hcloud_location: "{{ lookup('env', 'HCLOUD_LOCATION') | default('fsn1', true) }}"
+    molecule_hcloud_distro: "{{ lookup('env', 'MOLECULE_HCLOUD_DISTRO') | default('debian13', true) }}"
+    molecule_hcloud_scenario: "{{ lookup('env', 'MOLECULE_HCLOUD_SCENARIO') | default('default', true) }}"
+    molecule_run_id: "{{ lookup('env', 'GITHUB_RUN_ID') | default('local', true) }}"
+    molecule_run_attempt: "{{ lookup('env', 'GITHUB_RUN_ATTEMPT') | default('0', true) }}"
+    molecule_random_suffix: "{{ (molecule_ephemeral_directory | hash('sha1'))[:6] }}"
+    hcloud_image_map:
+      debian13: debian-13
+      ubuntu2404: ubuntu-24.04
+      rockylinux10: rocky-10
+    molecule_state_file: "{{ molecule_ephemeral_directory }}/hcloud_state.yml"
+    molecule_private_key_path: "{{ molecule_ephemeral_directory }}/id_ed25519"
+    # Private network configuration for keepalived VIP
+    private_network_range: "10.0.1.0/24"
+    private_network_subnet: "10.0.1.0/24"
+    keepalived_vip: "10.0.1.53"
+    # Name generation
+    _molecule_name_seed: >-
+      {{
+        (
+          'mol-'
+          ~ molecule_run_id
+          ~ '-'
+          ~ molecule_run_attempt
+          ~ '-'
+          ~ molecule_hcloud_distro
+          ~ '-'
+          ~ molecule_hcloud_scenario
+          ~ '-'
+          ~ molecule_random_suffix
+        )
+        | lower
+        | regex_replace('[^a-z0-9-]', '-')
+        | regex_replace('-+', '-')
+      }}
+    molecule_name_prefix: "{{ _molecule_name_seed[:50] }}"
+    molecule_network_name: "{{ molecule_name_prefix }}-net"
+    molecule_ssh_key_name: "{{ molecule_name_prefix }}-key"
+    servers:
+      - name: "{{ molecule_name_prefix }}-master"
+        instance_name: pihole-master
+        priority: 150
+      - name: "{{ molecule_name_prefix }}-backup"
+        instance_name: pihole-backup
+        priority: 140
+
+  tasks:
+    - name: Ensure HCLOUD_TOKEN is provided
+      ansible.builtin.assert:
+        that:
+          - hcloud_token | length > 0
+        fail_msg: "HCLOUD_TOKEN is required for Molecule Hetzner tests."
+
+    - name: Ensure supported distro is selected
+      ansible.builtin.assert:
+        that:
+          - molecule_hcloud_distro in hcloud_image_map
+        fail_msg: "Unsupported MOLECULE_HCLOUD_DISTRO='{{ molecule_hcloud_distro }}'."
+
+    - name: Ensure Molecule ephemeral directory exists
+      ansible.builtin.file:
+        path: "{{ molecule_ephemeral_directory }}"
+        state: directory
+        mode: "0700"
+
+    - name: Generate temporary SSH keypair for test hosts
+      community.crypto.openssh_keypair:
+        path: "{{ molecule_private_key_path }}"
+        type: ed25519
+        state: present
+        mode: "0600"
+
+    - name: Create Hetzner SSH key
+      ansible.builtin.command:
+        cmd: >-
+          hcloud ssh-key create
+          --name {{ molecule_ssh_key_name }}
+          --public-key-from-file {{ molecule_private_key_path }}.pub
+          --output json
+      register: _hcloud_ssh_key_create
+      changed_when: _hcloud_ssh_key_create.rc == 0
+      environment:
+        HCLOUD_TOKEN: "{{ hcloud_token }}"
+
+    - name: Parse Hetzner SSH key create response
+      ansible.builtin.set_fact:
+        _hcloud_ssh_key_id: "{{ (_hcloud_ssh_key_create.stdout | from_json).ssh_key.id }}"
+
+    - name: Create Hetzner private network
+      ansible.builtin.command:
+        cmd: >-
+          hcloud network create
+          --name {{ molecule_network_name }}
+          --ip-range {{ private_network_range }}
+          --output json
+      register: _hcloud_network_create
+      changed_when: _hcloud_network_create.rc == 0
+      environment:
+        HCLOUD_TOKEN: "{{ hcloud_token }}"
+
+    - name: Parse network create response
+      ansible.builtin.set_fact:
+        _hcloud_network_id: "{{ (_hcloud_network_create.stdout | from_json).network.id }}"
+
+    - name: Create network subnet
+      ansible.builtin.command:
+        cmd: >-
+          hcloud network add-subnet {{ molecule_network_name }}
+          --type cloud
+          --network-zone eu-central
+          --ip-range {{ private_network_subnet }}
+      register: _hcloud_subnet_create
+      changed_when: _hcloud_subnet_create.rc == 0
+      environment:
+        HCLOUD_TOKEN: "{{ hcloud_token }}"
+
+    - name: Create Hetzner servers
+      ansible.builtin.command:
+        cmd: >-
+          hcloud server create
+          --name {{ item.name }}
+          --type {{ hcloud_server_type }}
+          --image {{ hcloud_image_map[molecule_hcloud_distro] }}
+          --location {{ hcloud_location }}
+          --ssh-key {{ _hcloud_ssh_key_id }}
+          --network {{ molecule_network_name }}
+          --output json
+      loop: "{{ servers }}"
+      register: _hcloud_server_create
+      changed_when: _hcloud_server_create.rc == 0
+      retries: 3
+      delay: 10
+      until: _hcloud_server_create.rc == 0
+      environment:
+        HCLOUD_TOKEN: "{{ hcloud_token }}"
+
+    - name: Parse server create responses
+      ansible.builtin.set_fact:
+        _created_servers: >-
+          {{
+            _hcloud_server_create.results
+            | map(attribute='stdout')
+            | map('from_json')
+            | list
+          }}
+
+    - name: Build server info list
+      ansible.builtin.set_fact:
+        _server_info: >-
+          {{
+            _server_info | default([]) + [{
+              'name': item.0.name,
+              'instance_name': item.0.instance_name,
+              'server_id': item.1.server.id,
+              'public_ip': item.1.server.public_net.ipv4.ip,
+              'priority': item.0.priority
+            }]
+          }}
+      loop: "{{ servers | zip(_created_servers) | list }}"
+
+    - name: Wait for SSH port to open on all servers
+      ansible.builtin.wait_for:
+        host: "{{ item.public_ip }}"
+        port: 22
+        timeout: 300
+        delay: 2
+      loop: "{{ _server_info }}"
+
+    - name: Wait until SSH login works on all servers
+      ansible.builtin.command:
+        cmd: >-
+          ssh -i {{ molecule_private_key_path }}
+          -o StrictHostKeyChecking=no
+          -o UserKnownHostsFile=/dev/null
+          -o ConnectTimeout=10
+          root@{{ item.public_ip }} echo ready
+      loop: "{{ _server_info }}"
+      register: _molecule_ssh_wait
+      changed_when: false
+      retries: 30
+      delay: 5
+      until: _molecule_ssh_wait.rc == 0
+
+    - name: Wait for cloud-init to finish
+      ansible.builtin.command:
+        cmd: >-
+          ssh -i {{ molecule_private_key_path }}
+          -o StrictHostKeyChecking=no
+          -o UserKnownHostsFile=/dev/null
+          -o ConnectTimeout=10
+          root@{{ item.public_ip }} "cloud-init status --wait >/dev/null 2>&1 || true"
+      loop: "{{ _server_info }}"
+      changed_when: false
+      failed_when: false
+
+    - name: Get actual private IPs from servers
+      ansible.builtin.command:
+        cmd: >-
+          ssh -i {{ molecule_private_key_path }}
+          -o StrictHostKeyChecking=no
+          -o UserKnownHostsFile=/dev/null
+          -o ConnectTimeout=10
+          root@{{ item.public_ip }}
+          "ip -4 -o addr show | grep -E '10\.0\.1\.[0-9]+' | head -1 | awk '{print $4}' | cut -d/ -f1"
+      loop: "{{ _server_info }}"
+      register: _actual_private_ips
+      changed_when: false
+      retries: 6
+      delay: 10
+      until: _actual_private_ips.stdout | trim | length > 0
+
+    - name: Rebuild server info with actual private IPs
+      ansible.builtin.set_fact:
+        _server_info_updated: >-
+          {{
+            _server_info_updated | default([]) + [{
+              'name': item.0.name,
+              'instance_name': item.0.instance_name,
+              'server_id': item.0.server_id,
+              'public_ip': item.0.public_ip,
+              'private_ip': item.1.stdout | trim,
+              'priority': item.0.priority
+            }]
+          }}
+      loop: "{{ _server_info | zip(_actual_private_ips.results) | list }}"
+
+    - name: Apply updated server info
+      ansible.builtin.set_fact:
+        _server_info: "{{ _server_info_updated }}"
+
+    - name: Build Molecule instance config
+      ansible.builtin.set_fact:
+        _molecule_instance_config_final: >-
+          {{
+            _molecule_instance_config_final | default([]) + [{
+              'instance': item.instance_name,
+              'address': item.public_ip,
+              'user': 'root',
+              'port': '22',
+              'identity_file': molecule_private_key_path
+            }]
+          }}
+      loop: "{{ _server_info }}"
+
+    - name: Write Molecule instance config
+      ansible.builtin.copy:
+        dest: "{{ molecule_instance_config }}"
+        mode: "0600"
+        content: "{{ _molecule_instance_config_final | to_yaml }}"
+
+    - name: Persist Hetzner state for destroy phase
+      ansible.builtin.copy:
+        dest: "{{ molecule_state_file }}"
+        mode: "0600"
+        content: |
+          servers:
+          {% for srv in _server_info %}
+            - name: "{{ srv.name }}"
+              instance_name: "{{ srv.instance_name }}"
+              server_id: "{{ srv.server_id }}"
+              public_ip: "{{ srv.public_ip }}"
+              private_ip: "{{ srv.private_ip }}"
+              priority: {{ srv.priority }}
+          {% endfor %}
+          network_name: "{{ molecule_network_name }}"
+          network_id: "{{ _hcloud_network_id }}"
+          ssh_key_name: "{{ molecule_ssh_key_name }}"
+          ssh_key_path: "{{ molecule_private_key_path }}"
+          keepalived_vip: "{{ keepalived_vip }}"
+          private_network_range: "{{ private_network_range }}"
+
+    - name: Display created infrastructure
+      ansible.builtin.debug:
+        msg:
+          - "Created Pi-hole cluster infrastructure:"
+          - "  Network: {{ molecule_network_name }} ({{ private_network_range }})"
+          - "  Master: {{ _server_info[0].public_ip }} (private: {{ _server_info[0].private_ip }})"
+          - "  Backup: {{ _server_info[1].public_ip }} (private: {{ _server_info[1].private_ip }})"
+          - "  VIP: {{ keepalived_vip }}"

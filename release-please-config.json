@@ -1,0 +1,16 @@
+{
+  "packages": {
+    ".": {
+      "release-type": "simple",
+      "include-component-in-tag": false,
+      "extra-files": [
+        {
+          "type": "yaml",
+          "path": "galaxy.yml",
+          "jsonpath": "$.version"
+        }
+      ]
+    }
+  },
+  "pull-request-footer": "📋 Changelog generated automatically"
+}

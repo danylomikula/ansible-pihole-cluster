@@ -1,0 +1,91 @@
+---
+# No-unbound scenario: Test Pi-hole with external DNS
+# - No local Unbound resolver
+# - Uses Cloudflare/Google DNS
+
+- name: Load Hetzner state
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: Load Hetzner state file
+      ansible.builtin.include_vars:
+        file: "{{ molecule_ephemeral_directory }}/hcloud_state.yml"
+        name: hcloud_state
+
+    - name: Set cluster facts for all hosts
+      ansible.builtin.set_fact:
+        _hcloud_state: "{{ hcloud_state }}"
+      delegate_to: "{{ item }}"
+      delegate_facts: true
+      loop: "{{ groups['pihole_cluster'] }}"
+
+- name: Converge Pi-hole cluster (no-unbound scenario)
+  hosts: pihole_cluster
+  become: true
+  gather_facts: true
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+
+  vars:
+    # Pi-hole password
+    pihole_web_password: "molecule_test_no_unbound"
+    # VIP configuration
+    keepalived_vip_ipv4: "{{ _hcloud_state.keepalived_vip }}/24"
+    # Disable unbound - use external DNS
+    unbound_enabled: false
+    pihole_updatelists_enabled: false
+    nebula_sync_enabled: false
+    # External DNS upstreams
+    pihole_upstream_dns:
+      - "1.1.1.1"
+      - "1.0.0.1"
+      - "8.8.8.8"
+      - "8.8.4.4"
+    # Keepalived tuning
+    keepalived_check_interval: 2
+    keepalived_check_timeout: 2
+    keepalived_check_fall: 3
+    keepalived_check_rise: 2
+
+  pre_tasks:
+    - name: Set host-specific variables
+      ansible.builtin.set_fact:
+        ansible_host: "{{ hostvars[inventory_hostname]['ansible_host'] }}"
+        priority: "{{ (_hcloud_state.servers | selectattr('instance_name', 'equalto', inventory_hostname) | first).priority }}"
+        private_ip: "{{ (_hcloud_state.servers | selectattr('instance_name', 'equalto', inventory_hostname) | first).private_ip }}"
+
+    - name: Find private network interface and IP
+      ansible.builtin.shell:
+        cmd: |
+          set -o pipefail
+          # Find interface with IP in the 10.0.1.0/24 range (private network)
+          ip -4 -o addr show | grep -E '10\.0\.1\.[0-9]+' | head -1 | awk '{print $2, $4}' | sed 's|/.*||'
+        executable: /bin/bash
+      register: _private_net_result
+      changed_when: false
+      retries: 6
+      delay: 10
+      until: _private_net_result.stdout | trim | length > 0
+
+    - name: Set keepalived interface and unicast IP for private network
+      ansible.builtin.set_fact:
+        keepalived_interface: "{{ (_private_net_result.stdout | trim).split()[0] }}"
+        keepalived_unicast_src_ip: "{{ (_private_net_result.stdout | trim).split()[1] }}"
+
+    - name: Update apt cache (Debian)
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+      when: ansible_os_family == "Debian"
+
+  roles:
+    - role: bootstrap
+      vars:
+        bootstrap_timezone: "UTC"
+
+    - role: keepalived
+
+    - role: pihole
+
+    - role: status
