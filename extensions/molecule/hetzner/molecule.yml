@@ -24,6 +24,8 @@
 #   molecule verify -s hetzner
 #   molecule destroy -s hetzner
 
+shared_state: false
+
 dependency:
   name: galaxy
   options:
