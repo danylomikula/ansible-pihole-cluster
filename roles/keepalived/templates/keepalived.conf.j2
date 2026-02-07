@@ -5,12 +5,28 @@
 {% set _router_id = keepalived_virtual_router_id | default(1) %}
 {% set _advert_int = keepalived_advert_int | default(1) %}
 {% set _preempt_delay = keepalived_preempt_delay | default(900) %}
+{# Use configurable interface or fall back to default #}
+{% if keepalived_interface | default('') | length > 0 %}
+{% set _interface = keepalived_interface %}
+{% else %}
 {% set _interface = ansible_default_ipv4.interface %}
+{% endif %}
+{# Unicast source IP - configurable or fall back to default #}
+{% if keepalived_unicast_src_ip | default('') | length > 0 %}
+{% set _unicast_src_ip = keepalived_unicast_src_ip %}
+{% else %}
+{% set _unicast_src_ip = ansible_default_ipv4.address %}
+{% endif %}
 {# Build unicast peer list (all cluster hosts except current) #}
 {% set _peers = [] %}
 {% for host in groups['pihole_cluster'] | default([]) %}
 {% if host != inventory_hostname %}
-{% set _ = _peers.append(hostvars[host].ansible_host | default(hostvars[host].ansible_default_ipv4.address)) %}
+{# Use keepalived_unicast_src_ip from peer if set, otherwise ansible_host or default IP #}
+{% set _peer_ip = hostvars[host].keepalived_unicast_src_ip | default('') %}
+{% if _peer_ip | length == 0 %}
+{% set _peer_ip = hostvars[host].ansible_host | default(hostvars[host].ansible_default_ipv4.address) %}
+{% endif %}
+{% set _ = _peers.append(_peer_ip) %}
 {% endif %}
 {% endfor %}
 
@@ -50,7 +66,7 @@ vrrp_instance PIHOLE-IPv4 {
     preempt_delay {{ _preempt_delay }}
 
 {% if _peers | length > 0 %}
-    unicast_src_ip {{ ansible_default_ipv4.address }}
+    unicast_src_ip {{ _unicast_src_ip }}
     unicast_peer {
 {% for peer in _peers %}
         {{ peer }}
@@ -71,7 +87,7 @@ vrrp_instance PIHOLE-IPv6 {
     preempt_delay {{ _preempt_delay }}
 
 {% if _peers | length > 0 %}
-    unicast_src_ip {{ ansible_default_ipv4.address }}
+    unicast_src_ip {{ _unicast_src_ip }}
     unicast_peer {
 {% for peer in _peers %}
         {{ peer }}
@@ -102,7 +118,7 @@ vrrp_instance PIHOLE-IPv4 {
     preempt_delay {{ _preempt_delay }}
 
 {% if _peers | length > 0 %}
-    unicast_src_ip {{ ansible_default_ipv4.address }}
+    unicast_src_ip {{ _unicast_src_ip }}
     unicast_peer {
 {% for peer in _peers %}
         {{ peer }}

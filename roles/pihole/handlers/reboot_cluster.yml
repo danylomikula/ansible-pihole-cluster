@@ -4,35 +4,35 @@
 
 - name: Set reboot variables
   ansible.builtin.set_fact:
-    _reboot_timeout: "{{ pihole_reboot_timeout | default(900) }}"
-    _reboot_targets_master: "{{ groups['master'] | default([]) }}"
-    _reboot_targets_backup: "{{ groups['backup'] | default([]) }}"
+    _pihole_reboot_timeout: "{{ pihole_reboot_timeout | default(900) }}"
+    _pihole_reboot_targets_master: "{{ groups['master'] | default([]) }}"
+    _pihole_reboot_targets_backup: "{{ groups['backup'] | default([]) }}"
 
 - name: Display reboot plan
   ansible.builtin.debug:
     msg:
       - "Reboot order:"
-      - "  1. Master nodes: {{ _reboot_targets_master | join(', ') or 'none' }}"
-      - "  2. Backup nodes: {{ _reboot_targets_backup | join(', ') or 'none' }}"
+      - "  1. Master nodes: {{ _pihole_reboot_targets_master | join(', ') or 'none' }}"
+      - "  2. Backup nodes: {{ _pihole_reboot_targets_backup | join(', ') or 'none' }}"
 
 - name: Reboot master nodes (one at a time)
   ansible.builtin.reboot:
-    reboot_timeout: "{{ _reboot_timeout }}"
-  loop: "{{ _reboot_targets_master }}"
+    reboot_timeout: "{{ _pihole_reboot_timeout }}"
+  loop: "{{ _pihole_reboot_targets_master }}"
   loop_control:
     loop_var: reboot_host
     label: "{{ reboot_host }}"
   delegate_to: "{{ reboot_host }}"
   throttle: 1
-  when: _reboot_targets_master | length > 0
+  when: _pihole_reboot_targets_master | length > 0
 
 - name: Reboot backup nodes (one at a time)
   ansible.builtin.reboot:
-    reboot_timeout: "{{ _reboot_timeout }}"
-  loop: "{{ _reboot_targets_backup }}"
+    reboot_timeout: "{{ _pihole_reboot_timeout }}"
+  loop: "{{ _pihole_reboot_targets_backup }}"
   loop_control:
     loop_var: reboot_host
     label: "{{ reboot_host }}"
   delegate_to: "{{ reboot_host }}"
   throttle: 1
-  when: _reboot_targets_backup | length > 0
+  when: _pihole_reboot_targets_backup | length > 0

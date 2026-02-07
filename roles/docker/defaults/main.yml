@@ -2,7 +2,8 @@
 # Docker role defaults
 
 # Enable Docker installation (required for nebula-sync)
-nebula_sync_enabled: true
+# Global variable shared with nebula_sync role
+nebula_sync_enabled: true  # noqa: var-naming[no-role-prefix]
 
 # Docker packages to install on RedHat-based systems
 docker_install_packages:

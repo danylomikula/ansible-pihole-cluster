@@ -2,8 +2,8 @@
 # Pi-hole role defaults
 
 # Global IPv6 settings (shared across roles: pihole, keepalived, status)
-ipv6_enabled: false
-ipv6_vip: "fe80::53/64"
+ipv6_enabled: false  # noqa: var-naming[no-role-prefix]
+ipv6_vip: "fe80::53/64"  # noqa: var-naming[no-role-prefix]
 
 # Pi-hole version to install
 # https://github.com/pi-hole/pi-hole/releases

@@ -5,6 +5,14 @@
 # Use CIDR notation (e.g., 10.20.0.53/16)
 keepalived_vip_ipv4: "10.20.0.53/16"
 
+# Network interface for VRRP
+# Leave empty to use ansible_default_ipv4.interface
+keepalived_interface: ""
+
+# Unicast source IP for VRRP advertisements
+# Leave empty to use ansible_default_ipv4.address
+keepalived_unicast_src_ip: ""
+
 # VRRP configuration
 keepalived_virtual_router_id: 1
 keepalived_advert_int: 1

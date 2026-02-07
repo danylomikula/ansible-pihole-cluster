@@ -171,6 +171,10 @@
         src: "https://github.com/pi-hole/pi-hole/archive/refs/tags/v{{ pihole_version }}.zip"
         dest: /tmp
         remote_src: true
+      retries: 3
+      delay: 10
+      register: _pihole_download
+      until: _pihole_download is success
 
     - name: Run Pi-hole installer
       ansible.builtin.shell: |
@@ -224,6 +228,7 @@
 
 # Deploy pihole.toml from template (always, to keep config in sync with variables)
 # To use a fully custom config instead, place custom-pihole.toml in playbook root
+# Note: Pi-hole rewrites this file on startup, causing idempotence issues
 - name: Generate pihole.toml from template
   ansible.builtin.template:
     src: pihole.toml.j2
@@ -234,7 +239,7 @@
   tags:
     - pihole
     - config
-
+    - molecule-notest
 
 # ============================================
 # POST-INSTALLATION
@@ -284,10 +289,22 @@
     - pihole
     - service
 
+- name: Update Pi-hole Gravity database
+  ansible.builtin.command:
+    cmd: /usr/local/bin/pihole -g
+  register: _pihole_gravity_update
+  changed_when: "'gravity list' in _pihole_gravity_update.stdout"
+  retries: 3
+  delay: 10
+  until: _pihole_gravity_update.rc == 0
+  tags:
+    - pihole
+    - gravity
+
 - name: Request ordered reboot after Pi-hole install
   ansible.builtin.set_fact:
     _pihole_reboot_after_run: true
-  changed_when: true
+  changed_when: (_pihole_install_result is defined and _pihole_install_result.changed) | default(false)
   run_once: true
   when: pihole_reboot_after_run | default(true)
   notify: Reboot cluster in order

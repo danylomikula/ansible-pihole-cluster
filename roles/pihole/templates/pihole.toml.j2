@@ -15,8 +15,7 @@
     "127.0.0.1#5335"
 {% else %}
 {% for dns_server in pihole_upstream_dns %}
-    "{{ dns_server }}"{% if not loop.last %},{% endif %}
-
+    "{{ dns_server }}"{{ "," if not loop.last else "" }}
 {% endfor %}
 {% endif %}
   ]
