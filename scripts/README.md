@@ -139,6 +139,6 @@ Get your API token from: https://console.hetzner.cloud/projects/*/security/token
 ### Notes
 
 - **Real VMs**: Unlike Docker-based testing, Hetzner provides real VMs allowing full VIP failover testing.
-- **Nebula Sync**: Fully tested (real Docker, not Docker-in-Docker).
-- **System updates**: Still disabled in tests to avoid unnecessary reboots.
-- **Cost**: Tests create billable resources. Ensure destroy phase completes or manually clean up.
+- **Nebula Sync**: Fully tested.
+- **System updates**: The `updates` role is skipped in tests to avoid unnecessary reboots.
+- **Cost**: Tests create billable Hetzner resources. The script automatically destroys them after each test (including on failure or Ctrl+C).

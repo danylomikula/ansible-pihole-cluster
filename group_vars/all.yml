@@ -4,14 +4,13 @@
 
 ## General Settings
 ansible_user: ansible
-pihole_reboot_after_run: true          # Reboot cluster in order after Pi-hole install (master -> backup)
+pihole_reboot_after_run: true           # Reboot cluster in order after Pi-hole install (master -> backup)
 
 # =============================================================================
 # GLOBAL IPv6 SETTINGS
 # =============================================================================
-# Simple IPv6 configuration - one switch enables IPv6 across all components
-ipv6_enabled: false       # Enable IPv6 support (keepalived, pihole)
-ipv6_vip: "fe80::53/64"   # IPv6 virtual IP address (CIDR notation)
+ipv6_enabled: false                     # Enable IPv6 support (keepalived, pihole)
+ipv6_vip: "fe80::53/64"                 # IPv6 virtual IP address (CIDR notation)
 
 # =============================================================================
 # BOOTSTRAP ROLE
@@ -63,6 +62,7 @@ nebula_sync_additional_settings: {}     # Additional settings for partial sync
 # PI-HOLE ROLE
 # =============================================================================
 pihole_version: "6.3"                   # https://github.com/pi-hole/pi-hole/releases
+pihole_manage_config: true              # Set to false to preserve settings changed via web UI
 pihole_web_password: "CHANGE_ME"        # Web interface password (use ansible-vault!)
 pihole_local_domain: "homelab.local"
 # Web Interface
@@ -125,14 +125,14 @@ pihole_ntp_sync_count: 8
 
 # Conditional Forwarding (optional)
 # pihole_rev_servers:
-#   - cidr: "10.0.20.0/24"
-#     target: "10.0.20.1"
+#   - cidr: "10.20.0.0/16"
+#     target: "10.20.0.1"
 #     domain: "homelab.local"
 
 # Custom DNS Records (optional)
 # local_dns_records: |
-#   10.0.20.88 node.homelab.local
-#   10.0.20.96 nas.homelab.local
+#   10.20.0.88 node.homelab.local
+#   10.20.0.96 nas.homelab.local
 
 # Custom CNAME Records (optional)
 # local_cname_records: |

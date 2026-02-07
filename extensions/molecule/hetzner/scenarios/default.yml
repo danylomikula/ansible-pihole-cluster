@@ -4,6 +4,7 @@
 # - Unbound enabled
 # - pihole-updatelists enabled
 # - Nebula Sync enabled
+# - Custom DNS records, CNAME records, conditional forwarding
 
 - name: Load Hetzner state
   hosts: localhost
@@ -41,6 +42,18 @@
     # NTP sync
     pihole_ntp_sync_active: true
     pihole_ntp_sync_server: "pool.ntp.org"
+    # Custom DNS records
+    local_dns_records: |
+      10.0.1.100 testhost.homelab.local
+      10.0.1.101 testhost2.homelab.local
+    # Custom CNAME records
+    local_cname_records: |
+      testhost.homelab.local,testalias.homelab.local
+    # Conditional forwarding
+    pihole_rev_servers:
+      - cidr: "10.0.1.0/24"
+        target: "10.0.1.1"
+        domain: "homelab.local"
     # Keepalived tuning for tests
     keepalived_check_interval: 2
     keepalived_check_timeout: 2

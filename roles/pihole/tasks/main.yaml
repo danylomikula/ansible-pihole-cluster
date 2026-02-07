@@ -220,21 +220,25 @@
     src: "{{ playbook_dir }}/custom-pihole.toml"
     dest: /etc/pihole/pihole.toml
     mode: "0644"
-  when: _pihole_custom_config.stat.exists
+  when:
+    - pihole_manage_config | default(true)
+    - _pihole_custom_config.stat.exists
   notify: Restart pihole-FTL service
   tags:
     - pihole
     - config
 
-# Deploy pihole.toml from template (always, to keep config in sync with variables)
+# Deploy pihole.toml from template to keep config in sync with playbook variables
 # To use a fully custom config instead, place custom-pihole.toml in playbook root
-# Note: Pi-hole rewrites this file on startup, causing idempotence issues
+# Set pihole_manage_config: false to skip and preserve settings changed via web UI
 - name: Generate pihole.toml from template
   ansible.builtin.template:
     src: pihole.toml.j2
     dest: /etc/pihole/pihole.toml
     mode: "0644"
-  when: not _pihole_custom_config.stat.exists
+  when:
+    - pihole_manage_config | default(true)
+    - not _pihole_custom_config.stat.exists
   notify: Restart pihole-FTL service
   tags:
     - pihole

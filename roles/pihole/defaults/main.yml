@@ -9,6 +9,10 @@ ipv6_vip: "fe80::53/64"  # noqa: var-naming[no-role-prefix]
 # https://github.com/pi-hole/pi-hole/releases
 pihole_version: "6.3"
 
+# Manage pihole.toml configuration on every run
+# Set to false to prevent overwriting settings changed via Pi-hole web UI
+pihole_manage_config: true
+
 # Reboot cluster in order after Pi-hole install (master -> backup)
 pihole_reboot_after_run: true
 pihole_reboot_timeout: 900

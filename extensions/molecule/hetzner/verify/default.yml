@@ -259,6 +259,51 @@
       when: _enable_unbound
 
     # ============================================
+    # CUSTOM DNS RECORDS CHECKS
+    # ============================================
+    - name: Get custom DNS hosts
+      ansible.builtin.command:
+        cmd: pihole-FTL --config dns.hosts
+      register: _dns_hosts
+      changed_when: false
+
+    - name: Verify custom DNS records are configured
+      ansible.builtin.assert:
+        that:
+          - "'10.0.1.100 testhost.homelab.local' in _dns_hosts.stdout"
+          - "'10.0.1.101 testhost2.homelab.local' in _dns_hosts.stdout"
+        fail_msg: "Custom DNS records not found in pihole config"
+        success_msg: "Custom DNS records correctly configured"
+
+    - name: Get custom CNAME records
+      ansible.builtin.command:
+        cmd: pihole-FTL --config dns.cnameRecords
+      register: _cname_records
+      changed_when: false
+
+    - name: Verify custom CNAME records are configured
+      ansible.builtin.assert:
+        that:
+          - "'testhost.homelab.local,testalias.homelab.local' in _cname_records.stdout"
+        fail_msg: "Custom CNAME records not found in pihole config"
+        success_msg: "Custom CNAME records correctly configured"
+
+    - name: Get conditional forwarding (revServers)
+      ansible.builtin.command:
+        cmd: pihole-FTL --config dns.revServers
+      register: _rev_servers
+      changed_when: false
+
+    - name: Verify conditional forwarding is configured
+      ansible.builtin.assert:
+        that:
+          - "'10.0.1.0/24' in _rev_servers.stdout"
+          - "'10.0.1.1' in _rev_servers.stdout"
+          - "'homelab.local' in _rev_servers.stdout"
+        fail_msg: "Conditional forwarding (revServers) not configured"
+        success_msg: "Conditional forwarding correctly configured"
+
+    # ============================================
     # VERIFICATION SUMMARY
     # ============================================
     - name: Display verification summary
@@ -274,4 +319,7 @@
           - "DNS via peer ({{ _peer_ip }}): {{ 'PASS' if _dns_peer.rc == 0 else 'FAIL' }}"
           - "DNS via VIP: {{ 'PASS' if inventory_hostname in groups['master'] and _dns_vip.rc == 0 else 'SKIP (backup)' }}"
           - "VIP assigned: {{ 'PASS' if inventory_hostname in groups['master'] and _vip_assigned.rc == 0 else 'SKIP (backup)' }}"
+          - "Custom DNS records: PASS"
+          - "Custom CNAME records: PASS"
+          - "Conditional forwarding: PASS"
           - "========================================"
