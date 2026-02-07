@@ -107,6 +107,8 @@ jobs:
       - name: Install Ansible collections
         if: ${{ steps.hcloud.outputs.enabled == 'true' }}
         run: ansible-galaxy collection install -r requirements.yml
+        env:
+          ANSIBLE_HOME: /tmp/.ansible
 
       - name: Setup hcloud CLI
         if: ${{ steps.hcloud.outputs.enabled == 'true' }}
