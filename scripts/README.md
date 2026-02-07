@@ -100,8 +100,9 @@ HCLOUD_TOKEN=xxx HCLOUD_SERVER_TYPE=cx32 HCLOUD_LOCATION=fsn1 ./scripts/test-all
 Running without filters executes: **3 scenarios x 3 platforms = 9 tests**
 
 ```
-default/debian13      default/ubuntu2404    default/rockylinux10
-custom-config/...     no-unbound/...
+default/debian13        default/ubuntu2404        default/rockylinux10
+custom-config/debian13  custom-config/ubuntu2404  custom-config/rockylinux10
+no-unbound/debian13     no-unbound/ubuntu2404     no-unbound/rockylinux10
 ```
 
 ### Infrastructure

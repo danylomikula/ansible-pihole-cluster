@@ -75,9 +75,17 @@ jobs:
           # Custom config - test custom Pi-hole settings
           - scenario: custom-config
             distro: debian13
+          - scenario: custom-config
+            distro: ubuntu2404
+          - scenario: custom-config
+            distro: rockylinux10
           # No unbound - external DNS only
           - scenario: no-unbound
             distro: debian13
+          - scenario: no-unbound
+            distro: ubuntu2404
+          - scenario: no-unbound
+            distro: rockylinux10
     steps:
       - name: Check Hetzner token
         id: hcloud
