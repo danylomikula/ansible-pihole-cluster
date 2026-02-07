@@ -67,12 +67,11 @@
         priority: "{{ (_hcloud_state.servers | selectattr('instance_name', 'equalto', inventory_hostname) | first).priority }}"
         private_ip: "{{ (_hcloud_state.servers | selectattr('instance_name', 'equalto', inventory_hostname) | first).private_ip }}"
 
-    - name: Find private network interface and IP
+    - name: Find private network interface
       ansible.builtin.shell:
         cmd: |
           set -o pipefail
-          # Find interface with IP in the 10.0.1.0/24 range (private network)
-          ip -4 -o addr show | grep -E '10\.0\.1\.[0-9]+' | head -1 | awk '{print $2, $4}' | sed 's|/.*||'
+          ip -4 -o addr show | grep '{{ private_ip }}/' | awk '{print $2}'
         executable: /bin/bash
       register: _private_net_result
       changed_when: false
@@ -82,8 +81,8 @@
 
     - name: Set keepalived interface and unicast IP for private network
       ansible.builtin.set_fact:
-        keepalived_interface: "{{ (_private_net_result.stdout | trim).split()[0] }}"
-        keepalived_unicast_src_ip: "{{ (_private_net_result.stdout | trim).split()[1] }}"
+        keepalived_interface: "{{ _private_net_result.stdout | trim }}"
+        keepalived_unicast_src_ip: "{{ private_ip }}"
 
     - name: Update apt cache (Debian)
       ansible.builtin.apt:

@@ -18,10 +18,13 @@
       rockylinux10: rocky-10
     molecule_state_file: "{{ molecule_ephemeral_directory }}/hcloud_state.yml"
     molecule_private_key_path: "{{ molecule_ephemeral_directory }}/id_ed25519"
-    # Private network configuration for keepalived VIP
-    private_network_range: "10.0.1.0/24"
-    private_network_subnet: "10.0.1.0/24"
-    keepalived_vip: "10.0.1.53"
+    # Unique per-job subnet — avoids IP conflicts when parallel CI matrix jobs
+    # share the same Hetzner project.  The third octet is derived from a hash
+    # of the job name seed so every distro/scenario combination gets its own /24.
+    _network_octet: "{{ ((_molecule_name_seed | hash('md5'))[:4] | int(base=16)) % 254 + 1 }}"
+    private_network_range: "10.0.{{ _network_octet }}.0/24"
+    private_network_subnet: "10.0.{{ _network_octet }}.0/24"
+    keepalived_vip: "10.0.{{ _network_octet }}.53"
     # Name generation
     _molecule_name_seed: >-
       {{
@@ -209,7 +212,7 @@
           -o UserKnownHostsFile=/dev/null
           -o ConnectTimeout=10
           root@{{ item.public_ip }}
-          "ip -4 -o addr show | grep -E '10\.0\.1\.[0-9]+' | head -1 | awk '{print $4}' | cut -d/ -f1"
+          "ip -4 -o addr show | grep -E '10\.0\.{{ _network_octet }}\.[0-9]+' | head -1 | awk '{print $4}' | cut -d/ -f1"
       loop: "{{ _server_info }}"
       register: _actual_private_ips
       changed_when: false
