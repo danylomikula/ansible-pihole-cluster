@@ -7,8 +7,6 @@
   hosts: pihole_cluster
   become: true
   serial: 1  # Update one node at a time for zero-downtime
-  environment:
-    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
   roles:
     # System package updates
     - role: updates
