@@ -158,7 +158,7 @@
       register: _dns_peer
       changed_when: false
       failed_when: _dns_peer.rc != 0
-      retries: 3
+      retries: 6
       delay: 10
       until: _dns_peer.rc == 0
 

@@ -177,7 +177,7 @@
       register: _dns_peer
       changed_when: false
       failed_when: _dns_peer.rc != 0
-      retries: 3
+      retries: 6
       delay: 10
       until: _dns_peer.rc == 0
 
@@ -187,7 +187,7 @@
       register: _dns_vip
       changed_when: false
       failed_when: _dns_vip.rc != 0
-      retries: 6
+      retries: 10
       delay: 10
       until: _dns_vip.rc == 0
       when: inventory_hostname in groups['master']

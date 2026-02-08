@@ -110,7 +110,7 @@ jobs:
       - name: Install tooling
         if: ${{ steps.hcloud.outputs.enabled == 'true' }}
         run: |
-          pip install 'ansible-core>=2.20' 'molecule>=6.0.0'
+          pip install 'ansible-core>=2.20' 'molecule>=25.7.0'
 
       - name: Install Ansible collections
         if: ${{ steps.hcloud.outputs.enabled == 'true' }}
