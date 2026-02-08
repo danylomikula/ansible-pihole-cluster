@@ -24,7 +24,7 @@ Automated blocklist management for Pi-hole using pihole-updatelists.
 
 ## Dependencies
 
-- danylomikula.ansible_pihole_cluster.pihole
+None
 
 ## Example Playbook
 

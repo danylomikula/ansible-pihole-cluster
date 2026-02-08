@@ -12,9 +12,8 @@ Installs Docker on the master node for running nebula-sync container.
 
 | Variable | Default | Description |
 |----------|---------|-------------|
+| `nebula_sync_enabled` | `true` | Enable Docker installation (runs only on master node) |
 | `docker_install_packages` | `[docker-ce, docker-ce-cli, containerd.io, docker-buildx-plugin, docker-compose-plugin]` | Docker packages to install (RedHat only) |
-
-Docker is automatically installed on the master node when `nebula_sync_enabled` is true.
 
 Installation method varies by OS:
 - **Debian/Ubuntu**: Uses official Docker convenience script (get.docker.com)

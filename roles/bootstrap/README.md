@@ -14,11 +14,10 @@ Prepares the system for Pi-hole cluster deployment.
 | `bootstrap_timezone` | `America/New_York` | System timezone (IANA format) |
 | `bootstrap_install_packages` | `[unzip, curl]` | Packages to install |
 
-Additional packages installed automatically:
-- **All systems**: DNS utilities (`dnsutils` on Debian, `bind-utils` on RedHat)
-- **RedHat only**: SELinux Python bindings (`python3-libselinux`, `python3-requests`)
-
-SELinux is automatically disabled on RedHat-based systems.
+The role also:
+- Sets the system hostname to `inventory_hostname` (triggers reboot if changed)
+- Installs DNS utilities (`dnsutils` on Debian, `bind-utils` on RedHat)
+- Installs SELinux Python bindings and disables SELinux on RedHat-based systems
 
 ## Dependencies
 

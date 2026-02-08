@@ -25,7 +25,7 @@ Deploys nebula-sync Docker container for Pi-hole settings synchronization.
 
 ## Dependencies
 
-- danylomikula.ansible_pihole_cluster.docker
+None
 
 ## Example Playbook
 

@@ -18,7 +18,7 @@ Installs and configures unbound as a recursive DNS resolver for Pi-hole.
 | `unbound_num_threads` | `1` | Worker threads |
 | `unbound_edns_buffer_size` | `1232` | EDNS buffer size |
 | `unbound_so_rcvbuf` | `1m` | Socket receive buffer size |
-| `unbound_private_domain` | `homelab.local` | Private domain |
+| `unbound_private_domain` | `{{ pihole_local_domain }}` | Private domain (inherits from `pihole_local_domain`, falls back to `homelab.local`) |
 
 ## Dependencies
 

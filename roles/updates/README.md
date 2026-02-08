@@ -12,7 +12,7 @@ Updates system packages on Pi-hole cluster nodes.
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `updates_enabled` | `true` | Enable updates |
-| `updates_reboot` | `true` | Reboot after updates if required |
+| `updates_reboot` | `true` | Reboot after updates (Debian: only if required, RedHat: always) |
 
 Package cache and unused packages are automatically cleaned.
 
