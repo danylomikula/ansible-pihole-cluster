@@ -4,7 +4,7 @@ Prepares the system for Pi-hole cluster deployment.
 
 ## Requirements
 
-- Ansible 2.14+
+- Ansible 2.17+
 - Root/sudo access
 
 ## Role Variables
@@ -35,7 +35,7 @@ None
 
 ## License
 
-Apache 2.0 Licensed. See [LICENSE](LICENSE) for full details.
+Apache 2.0 Licensed. See [LICENSE](../../LICENSE) for full details.
 
 ## Authors
 

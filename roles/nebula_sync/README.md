@@ -4,7 +4,7 @@ Deploys nebula-sync Docker container for Pi-hole settings synchronization.
 
 ## Requirements
 
-- Ansible 2.14+
+- Ansible 2.17+
 - Docker installed on master node
 - Root/sudo access
 
@@ -38,7 +38,7 @@ None
 
 ## License
 
-Apache 2.0 Licensed. See [LICENSE](LICENSE) for full details.
+Apache 2.0 Licensed. See [LICENSE](../../LICENSE) for full details.
 
 ## Authors
 

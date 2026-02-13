@@ -36,7 +36,7 @@ HCLOUD_TOKEN=xxx ./scripts/test-all-platforms.sh [OPTIONS] [MOLECULE_COMMAND]
 
 Default command is `test`. You can specify any molecule command:
 
-- `test` - Full test cycle (create, converge, idempotence, verify, destroy)
+- `test` - Full test cycle (syntax, create, prepare, converge, verify, destroy)
 - `converge` - Only create and configure (no destroy)
 - `verify` - Only run verification tests
 - `destroy` - Only destroy test instances

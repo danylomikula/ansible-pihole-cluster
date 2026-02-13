@@ -4,7 +4,7 @@ Installs and configures Pi-hole DNS sinkhole.
 
 ## Requirements
 
-- Ansible 2.14+
+- Ansible 2.17+
 - Root/sudo access
 - Supported OS (Debian, Ubuntu, Rocky Linux)
 
@@ -137,7 +137,7 @@ Always use `ansible-vault` for `pihole_web_password`. The password is set secure
 
 ## License
 
-Apache 2.0 Licensed. See [LICENSE](LICENSE) for full details.
+Apache 2.0 Licensed. See [LICENSE](../../LICENSE) for full details.
 
 ## Authors
 

@@ -162,6 +162,17 @@
       delay: 10
       until: _dns_peer.rc == 0
 
+    - name: Test DNS resolution via VIP (master only)
+      ansible.builtin.command:
+        cmd: "dig @{{ _vip_ipv4 }} google.com +short +time=10 +tries=3"
+      register: _dns_vip
+      changed_when: false
+      failed_when: _dns_vip.rc != 0
+      retries: 10
+      delay: 10
+      until: _dns_vip.rc == 0
+      when: inventory_hostname in groups['master']
+
     # ============================================
     # VERIFICATION SUMMARY
     # ============================================

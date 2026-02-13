@@ -4,7 +4,7 @@ Installs and configures keepalived for Pi-hole high availability using VRRP.
 
 ## Requirements
 
-- Ansible 2.14+
+- Ansible 2.17+
 - Root/sudo access
 - Two or more nodes for HA
 
@@ -57,7 +57,7 @@ pihole-02 priority=140
 
 ## License
 
-Apache 2.0 Licensed. See [LICENSE](LICENSE) for full details.
+Apache 2.0 Licensed. See [LICENSE](../../LICENSE) for full details.
 
 ## Authors
 

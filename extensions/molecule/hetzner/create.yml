@@ -81,6 +81,33 @@
         state: present
         mode: "0600"
 
+    # Clean up stale resources from a previous run that may not have
+    # been destroyed (e.g. local re-runs that share the same name prefix).
+    - name: Remove stale servers (if exist)
+      ansible.builtin.command:
+        cmd: "hcloud server delete {{ item.name }}"
+      loop: "{{ servers }}"
+      environment:
+        HCLOUD_TOKEN: "{{ hcloud_token }}"
+      failed_when: false
+      changed_when: false
+
+    - name: Remove stale network (if exists)
+      ansible.builtin.command:
+        cmd: hcloud network delete {{ molecule_network_name }}
+      environment:
+        HCLOUD_TOKEN: "{{ hcloud_token }}"
+      failed_when: false
+      changed_when: false
+
+    - name: Remove stale SSH key (if exists)
+      ansible.builtin.command:
+        cmd: hcloud ssh-key delete {{ molecule_ssh_key_name }}
+      environment:
+        HCLOUD_TOKEN: "{{ hcloud_token }}"
+      failed_when: false
+      changed_when: false
+
     - name: Create Hetzner SSH key
       ansible.builtin.command:
         cmd: >-

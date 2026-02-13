@@ -4,7 +4,7 @@ Installs and configures unbound as a recursive DNS resolver for Pi-hole.
 
 ## Requirements
 
-- Ansible 2.14+
+- Ansible 2.17+
 - Root/sudo access
 
 ## Role Variables
@@ -35,7 +35,7 @@ None
 
 ## License
 
-Apache 2.0 Licensed. See [LICENSE](LICENSE) for full details.
+Apache 2.0 Licensed. See [LICENSE](../../LICENSE) for full details.
 
 ## Authors
 

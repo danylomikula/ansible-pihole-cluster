@@ -4,7 +4,7 @@ Installs Docker on the master node for running nebula-sync container.
 
 ## Requirements
 
-- Ansible 2.14+
+- Ansible 2.17+
 - Root/sudo access
 - Internet access for Docker installation
 
@@ -34,7 +34,7 @@ None
 
 ## License
 
-Apache 2.0 Licensed. See [LICENSE](LICENSE) for full details.
+Apache 2.0 Licensed. See [LICENSE](../../LICENSE) for full details.
 
 ## Authors
 

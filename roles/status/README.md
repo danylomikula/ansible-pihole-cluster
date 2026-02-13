@@ -4,7 +4,7 @@ Verifies Pi-hole cluster service status.
 
 ## Requirements
 
-- Ansible 2.14+
+- Ansible 2.17+
 - Pi-hole cluster deployed
 
 ## Role Variables
@@ -41,7 +41,7 @@ None
 
 ## License
 
-Apache 2.0 Licensed. See [LICENSE](LICENSE) for full details.
+Apache 2.0 Licensed. See [LICENSE](../../LICENSE) for full details.
 
 ## Authors
 

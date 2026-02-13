@@ -149,4 +149,4 @@ pihole_updatelists_allowlists_url: ""
 pihole_updatelists_regex_blacklist_url: "https://raw.githubusercontent.com/mmotti/pihole-regex/master/regex.list"
 pihole_updatelists_regex_whitelist_url: "https://raw.githubusercontent.com/mmotti/pihole-regex/master/whitelist.list"
 pihole_updatelists_interval: "24h"      # Update frequency (e.g., 12h, 24h, weekly)
-pihole_updatelists_run_now: true        # Run immediately (default: false, systemd timer handles it)
+pihole_updatelists_run_now: true        # Run immediately after deployment
