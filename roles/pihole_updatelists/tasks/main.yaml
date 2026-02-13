@@ -1,102 +1,107 @@
 ---
-- name: Install pihole-updatelists dependencies
-  ansible.builtin.package:
-    name:
-      - php-cli
-      - php-sqlite3
-      - php-intl
-      - php-curl
-    state: present
+- name: Pi-hole updatelists role
+  when: pihole_updatelists_enabled | default(true)
   tags:
     - pihole_updatelists
+  block:
+    - name: Install pihole-updatelists dependencies
+      ansible.builtin.package:
+        name:
+          - php-cli
+          - php-sqlite3
+          - php-intl
+          - php-curl
+        state: present
+      tags:
+        - pihole_updatelists
 
-- name: Create pihole-updatelists configuration
-  ansible.builtin.template:
-    dest: /etc/pihole-updatelists.conf
-    src: pihole-updatelists.conf.j2
-    mode: "0644"
-  tags:
-    - pihole_updatelists
+    - name: Create pihole-updatelists configuration
+      ansible.builtin.template:
+        dest: /etc/pihole-updatelists.conf
+        src: pihole-updatelists.conf.j2
+        mode: "0644"
+      tags:
+        - pihole_updatelists
 
-- name: Download pihole-updatelists script
-  ansible.builtin.get_url:
-    url: https://raw.githubusercontent.com/jacklul/pihole-updatelists/master/pihole-updatelists.php
-    dest: /usr/local/sbin/pihole-updatelists
-    mode: "0755"
-  tags:
-    - pihole_updatelists
+    - name: Download pihole-updatelists script
+      ansible.builtin.get_url:
+        url: https://raw.githubusercontent.com/jacklul/pihole-updatelists/master/pihole-updatelists.php
+        dest: /usr/local/sbin/pihole-updatelists
+        mode: "0755"
+      tags:
+        - pihole_updatelists
 
-- name: Patch pihole-updatelists for RedHat compatibility
-  ansible.builtin.replace:
-    path: /usr/local/sbin/pihole-updatelists
-    regexp: "(^ {8}print 'root privileges required' \\. PHP_EOL;\\n^ {8}exit\\(1\\);)"
-    replace: "        print ' ';"
-  when: ansible_os_family == "RedHat"
-  tags:
-    - pihole_updatelists
+    - name: Patch pihole-updatelists for RedHat compatibility
+      ansible.builtin.replace:
+        path: /usr/local/sbin/pihole-updatelists
+        regexp: "(^ {8}print 'root privileges required' \\. PHP_EOL;\\n^ {8}exit\\(1\\);)"
+        replace: "        print ' ';"
+      when: ansible_os_family == "RedHat"
+      tags:
+        - pihole_updatelists
 
-- name: Create pihole-updatelists systemd service
-  ansible.builtin.copy:
-    dest: /etc/systemd/system/pihole-updatelists.service
-    mode: "0644"
-    content: |
-      [Unit]
-      Description=Pi-hole's Lists Updater by jacklul
-      Wants=network-online.target
-      After=network-online.target
-      After=pihole-FTL.service
+    - name: Create pihole-updatelists systemd service
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/pihole-updatelists.service
+        mode: "0644"
+        content: |
+          [Unit]
+          Description=Pi-hole's Lists Updater by jacklul
+          Wants=network-online.target
+          After=network-online.target
+          After=pihole-FTL.service
 
-      [Service]
-      Type=oneshot
-      ExecStart=/usr/local/sbin/pihole-updatelists
-  notify: Reload systemd
-  tags:
-    - pihole_updatelists
+          [Service]
+          Type=oneshot
+          ExecStart=/usr/local/sbin/pihole-updatelists
+      notify: Reload systemd
+      tags:
+        - pihole_updatelists
 
-- name: Create pihole-updatelists systemd timer
-  ansible.builtin.copy:
-    dest: /etc/systemd/system/pihole-updatelists.timer
-    mode: "0644"
-    content: |
-      [Unit]
-      Description=Pi-hole's Lists Updater by jacklul
+    - name: Create pihole-updatelists systemd timer
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/pihole-updatelists.timer
+        mode: "0644"
+        content: |
+          [Unit]
+          Description=Pi-hole's Lists Updater by jacklul
 
-      [Timer]
-      OnBootSec=2min
-      OnUnitActiveSec={{ pihole_updatelists_interval }}
-      RandomizedDelaySec=30min
+          [Timer]
+          OnBootSec=2min
+          OnUnitActiveSec={{ pihole_updatelists_interval }}
+          RandomizedDelaySec=30min
 
-      [Install]
-      WantedBy=timers.target
-  notify: Reload systemd
-  tags:
-    - pihole_updatelists
+          [Install]
+          WantedBy=timers.target
+      notify: Reload systemd
+      tags:
+        - pihole_updatelists
 
-- name: Flush handlers
-  ansible.builtin.meta: flush_handlers
+    - name: Flush handlers
+      ansible.builtin.meta: flush_handlers
 
-- name: Enable pihole-updatelists timer
-  ansible.builtin.systemd:
-    name: pihole-updatelists.timer
-    enabled: true
-    state: started
-  tags:
-    - pihole_updatelists
+    - name: Enable pihole-updatelists timer
+      ansible.builtin.systemd:
+        name: pihole-updatelists.timer
+        enabled: true
+        state: started
+      tags:
+        - pihole_updatelists
 
-- name: Run pihole-updatelists
-  ansible.builtin.command: /usr/local/sbin/pihole-updatelists
-  changed_when: false
-  failed_when:
-    - _pihole_updatelists_result.rc != 0
-    - "'Another process is already running' not in _pihole_updatelists_result.stdout"
-  register: _pihole_updatelists_result
-  when: pihole_updatelists_run_now | default(true)
-  tags:
-    - pihole_updatelists
+    - name: Run pihole-updatelists
+      ansible.builtin.command: /usr/local/sbin/pihole-updatelists
+      changed_when: false
+      failed_when:
+        - _pihole_updatelists_result.rc != 0
+        - "'Another process is already running' not in _pihole_updatelists_result.stdout"
+      register: _pihole_updatelists_result
+      when: pihole_updatelists_run_now | default(true)
+      tags:
+        - pihole_updatelists
 
-- name: Update Pi-hole Gravity
-  ansible.builtin.command: /usr/local/bin/pihole updateGravity
-  changed_when: false
-  when: pihole_updatelists_run_now | default(true)
-  tags:
-    - pihole_updatelists
+    - name: Update Pi-hole Gravity
+      ansible.builtin.command: /usr/local/bin/pihole updateGravity
+      changed_when: false
+      when: pihole_updatelists_run_now | default(true)
+      tags:
+        - pihole_updatelists

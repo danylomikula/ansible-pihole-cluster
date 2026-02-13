@@ -10,14 +10,12 @@
   roles:
     # System package updates
     - role: updates
-      when: updates_enabled | default(true)
 
     # Pi-hole update (re-runs installer with new version)
     - role: pihole
 
     # Nebula Sync update (pulls new container version)
     - role: nebula_sync
-      when: nebula_sync_enabled | default(true)
 
     # Verify services
     - role: status

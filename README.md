@@ -93,18 +93,13 @@ Create **`site.yml`** - the main playbook with all configuration:
       10.20.0.96 nas.homelab.local
   roles:
     - role: danylomikula.ansible_pihole_cluster.updates
-      when: updates_enabled
     - role: danylomikula.ansible_pihole_cluster.bootstrap
     - role: danylomikula.ansible_pihole_cluster.docker
-      when: nebula_sync_enabled
     - role: danylomikula.ansible_pihole_cluster.keepalived
     - role: danylomikula.ansible_pihole_cluster.unbound
-      when: unbound_enabled
     - role: danylomikula.ansible_pihole_cluster.pihole
     - role: danylomikula.ansible_pihole_cluster.pihole_updatelists
-      when: pihole_updatelists_enabled
     - role: danylomikula.ansible_pihole_cluster.nebula_sync
-      when: nebula_sync_enabled
     - role: danylomikula.ansible_pihole_cluster.status
 ```
 
@@ -137,10 +132,8 @@ To quickly update system or change settings, create an `update_cluster.yml` play
     nebula_sync_version: "v0.11.1"
   roles:
     - role: danylomikula.ansible_pihole_cluster.updates
-      when: updates_enabled
     - role: danylomikula.ansible_pihole_cluster.pihole
     - role: danylomikula.ansible_pihole_cluster.nebula_sync
-      when: nebula_sync_enabled
     - role: danylomikula.ansible_pihole_cluster.status
 ```
 
