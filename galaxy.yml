@@ -1,4 +1,3 @@
----
 namespace: danylomikula
 name: ansible_pihole_cluster
 version: 3.0.0
@@ -6,8 +5,8 @@ readme: README.md
 authors:
   - Danylo Mikula <dan@mikula.dev>
 description: >-
-  Ansible Collection for deploying highly available Pi-hole DNS clusters
-  with keepalived failover, unbound recursive DNS, and nebula-sync replication.
+  Ansible Collection for deploying highly available Pi-hole DNS clusters with
+  keepalived failover, unbound recursive DNS, and nebula-sync replication.
 license_file: LICENSE
 tags:
   - pihole
@@ -22,9 +21,9 @@ tags:
   - adblock
   - homelab
 dependencies:
-  community.docker: ">=3.0.0"
-  community.general: ">=6.0.0"
-  ansible.posix: ">=1.5.0"
+  community.docker: '>=3.0.0'
+  community.general: '>=6.0.0'
+  ansible.posix: '>=1.5.0'
 repository: https://github.com/danylomikula/ansible-pihole-cluster
 documentation: https://github.com/danylomikula/ansible-pihole-cluster/blob/main/README.md
 homepage: https://github.com/danylomikula/ansible-pihole-cluster
@@ -40,7 +39,7 @@ build_ignore:
   - .release-please-manifest.json
   - release-please-config.json
   - requirements.yml
-  - "*.tar.gz"
+  - '*.tar.gz'
   - molecule
   - extensions
   - inventory
