@@ -45,8 +45,8 @@ Has been tested on:
     chmod 440 /etc/sudoers.d/ansible
     ```
 
-  > [!NOTE]
-  > You can use [ansible-bootstrap](https://github.com/danylomikula/ansible-bootstrap) to automate initial host setup (SSH keys, sudo, static IP, etc.) before running this collection.
+> [!NOTE]
+> You can use [ansible-bootstrap](https://github.com/danylomikula/ansible-bootstrap) to automate initial host setup (SSH keys, sudo, static IP, etc.) before running this collection.
 
 ## Guide
 Read the step-by-step guide: **[Build a Highly Available Pi-hole Cluster with Ansible (VRRP)](https://dev.to/mikula/build-a-highly-available-pi-hole-cluster-with-ansible-vrrp-gbp)**
@@ -113,7 +113,7 @@ ansible-playbook site.yml
 
 Point your DNS server settings to the virtual IP (`keepalived_vip_ipv4`) that you set in `site.yml`.
 
-> **Note:**
+> [!NOTE]
 > You can run `site.yml` playbook at any time.
 > It will bootstrap a fresh Pi-hole installation or apply updates to an existing one.
 > By default, any settings changed manually on the nodes (e.g. via the Pi-hole web UI) will be overwritten by the values defined in your playbook.
@@ -159,7 +159,8 @@ pihole_manage_config: true   # (default) Always generate pihole.toml from playbo
 pihole_manage_config: false  # Skip config generation, preserve settings changed via web UI
 ```
 
-> **Note:** Even with `pihole_manage_config: false`, the config is always generated during **initial installation** (Pi-hole needs it to start).
+> [!NOTE]
+> Even with `pihole_manage_config: false`, the config is always generated during **installation or upgrade** (when the Pi-hole version changes) because the installer needs it to start.
 
 ### Custom `pihole.toml` File
 
