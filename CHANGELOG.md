@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.0.0](https://github.com/danylomikula/ansible-pihole-cluster/compare/v3.0.0...v3.0.0) (2026-02-14)
+
+
+### ⚠ BREAKING CHANGES
+
+* restructure as Ansible Galaxy collection with Molecule testing ([#21](https://github.com/danylomikula/ansible-pihole-cluster/issues/21))
+* Pi-hole v6 Support ([#16](https://github.com/danylomikula/ansible-pihole-cluster/issues/16))
+
+### Features
+
+* Bump Pi-hole to 6.1, allow NTP in firewalld, and add pihole‑FTL restart retries ([#18](https://github.com/danylomikula/ansible-pihole-cluster/issues/18)) ([b4e55e1](https://github.com/danylomikula/ansible-pihole-cluster/commit/b4e55e1496f0791ada9a88bda84b7e85789c51fb))
+* Create firewalld rules only if service is installed ([#12](https://github.com/danylomikula/ansible-pihole-cluster/issues/12)) ([a87b715](https://github.com/danylomikula/ansible-pihole-cluster/commit/a87b715ff5f2aaa71e79ebb2752928518773936f))
+* Enable Release Workflow ([#11](https://github.com/danylomikula/ansible-pihole-cluster/issues/11)) ([0d75ead](https://github.com/danylomikula/ansible-pihole-cluster/commit/0d75eadecc4900f26a29fe3f17e9d6026fc30509))
+* Expand pihole.toml configuration & bump nebula-sync v0.7.0 ([#17](https://github.com/danylomikula/ansible-pihole-cluster/issues/17)) ([141fe7e](https://github.com/danylomikula/ansible-pihole-cluster/commit/141fe7e9735f4ad9f245fc47387300d7854b8295))
+* Pi-hole v6 Support ([#16](https://github.com/danylomikula/ansible-pihole-cluster/issues/16)) ([f868590](https://github.com/danylomikula/ansible-pihole-cluster/commit/f8685904147ca332ad91bcf87aa958f7b834c8dc))
+* Restart DNS after Pi-hole installation ([#10](https://github.com/danylomikula/ansible-pihole-cluster/issues/10)) ([b1619fa](https://github.com/danylomikula/ansible-pihole-cluster/commit/b1619faebd16250b83816b858b51dadddcefff6d))
+* restructure as Ansible Galaxy collection with Molecule testing ([#21](https://github.com/danylomikula/ansible-pihole-cluster/issues/21)) ([f647a4b](https://github.com/danylomikula/ansible-pihole-cluster/commit/f647a4bbafe6edc129677e0daaa4e0ef2787c9e9))
+* Rocky Linux 10 support + Pi-hole 6.1.4 + Nebula Sync 0.11.0 ([#19](https://github.com/danylomikula/ansible-pihole-cluster/issues/19)) ([97446be](https://github.com/danylomikula/ansible-pihole-cluster/commit/97446bea85161464333813fba017e94bdf22a7a5))
+* Update README, Nebula Sync version and unbound config ([#20](https://github.com/danylomikula/ansible-pihole-cluster/issues/20)) ([71ab36c](https://github.com/danylomikula/ansible-pihole-cluster/commit/71ab36cb43a434b33bf0b6f5ad1aee4891d9f1cc))
+* Upgrade Pi-hole to 5.18.4; update README ([#14](https://github.com/danylomikula/ansible-pihole-cluster/issues/14)) ([4c99e05](https://github.com/danylomikula/ansible-pihole-cluster/commit/4c99e058dd7c64ad3e45323c5c71bf21eea9c02b))
+
 ## [2.4.0](https://github.com/danylomikula/ansible-pihole-cluster/compare/v2.3.0...v2.4.0) (2025-11-07)
 
 ### Features
