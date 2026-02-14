@@ -1,0 +1,11 @@
+---
+# Bootstrap role defaults
+
+# System timezone (IANA format)
+# https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+bootstrap_timezone: "America/New_York"
+
+# Common packages to install
+bootstrap_install_packages:
+  - unzip
+  - curl

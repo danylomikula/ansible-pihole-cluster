@@ -1,0 +1,17 @@
+---
+# Deploy Pi-hole HA Cluster
+# Usage: ansible-playbook site.yml
+
+- name: Deploy Pi-hole HA Cluster
+  hosts: pihole_cluster
+  become: true
+  roles:
+    - role: updates
+    - role: bootstrap
+    - role: docker
+    - role: keepalived
+    - role: unbound
+    - role: pihole
+    - role: pihole_updatelists
+    - role: nebula_sync
+    - role: status

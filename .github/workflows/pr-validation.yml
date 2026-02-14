@@ -1,0 +1,227 @@
+name: PR Validation
+
+on:
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: pr-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ansible-lint:
+    name: Ansible Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+
+      - name: Install Ansible and collections
+        run: |
+          pip install 'ansible-core>=2.20' 'ansible-lint>=26.0'
+          ansible-galaxy collection install -r requirements.yml
+
+      - name: Run ansible-lint
+        run: ansible-lint --force-color
+
+  syntax-check:
+    name: Ansible Syntax Check
+    runs-on: ubuntu-latest
+    needs: ansible-lint
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+
+      - name: Install Ansible and collections
+        run: |
+          pip install 'ansible-core>=2.20'
+          ansible-galaxy collection install -r requirements.yml
+
+      - name: Run syntax check
+        run: ANSIBLE_LOCAL_TEMP=/tmp/ansible-local ANSIBLE_REMOTE_TEMP=/tmp/ansible-remote ansible-playbook -i inventory/hosts.ini site.yml --syntax-check
+
+  hetzner-e2e:
+    name: Hetzner E2E (${{ matrix.scenario }}/${{ matrix.distro }})
+    if: ${{ github.event.pull_request.head.repo.fork == false }}
+    runs-on: ubuntu-latest
+    needs:
+      - ansible-lint
+      - syntax-check
+    env:
+      HCLOUD_TOKEN: ${{ secrets.HCLOUD_TOKEN }}
+    strategy:
+      fail-fast: false
+      max-parallel: ${{ fromJSON(vars.HCLOUD_MAX_PARALLEL || '2') }}
+      matrix:
+        include:
+          # Default scenario - full test with all features
+          - scenario: default
+            distro: debian13
+          - scenario: default
+            distro: ubuntu2404
+          - scenario: default
+            distro: rockylinux10
+          # Custom config - test custom Pi-hole settings
+          - scenario: custom-config
+            distro: debian13
+          - scenario: custom-config
+            distro: ubuntu2404
+          - scenario: custom-config
+            distro: rockylinux10
+          # No unbound - external DNS only
+          - scenario: no-unbound
+            distro: debian13
+          - scenario: no-unbound
+            distro: ubuntu2404
+          - scenario: no-unbound
+            distro: rockylinux10
+    steps:
+      - name: Check Hetzner token
+        id: hcloud
+        run: |
+          if [ -n "${HCLOUD_TOKEN}" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "HCLOUD_TOKEN is not configured. Skipping Hetzner E2E."
+          fi
+
+      - name: Checkout
+        if: ${{ steps.hcloud.outputs.enabled == 'true' }}
+        uses: actions/checkout@v6
+
+      - name: Setup Python
+        if: ${{ steps.hcloud.outputs.enabled == 'true' }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+
+      - name: Install tooling
+        if: ${{ steps.hcloud.outputs.enabled == 'true' }}
+        run: |
+          pip install 'ansible-core>=2.20' 'molecule>=25.7.0'
+
+      - name: Install Ansible collections
+        if: ${{ steps.hcloud.outputs.enabled == 'true' }}
+        run: ansible-galaxy collection install -r requirements.yml
+        env:
+          ANSIBLE_HOME: /tmp/.ansible
+
+      - name: Setup hcloud CLI
+        if: ${{ steps.hcloud.outputs.enabled == 'true' }}
+        uses: hetznercloud/setup-hcloud@v1
+
+      - name: Ensure CI artifacts directory exists
+        if: ${{ steps.hcloud.outputs.enabled == 'true' }}
+        run: mkdir -p .ci_artifacts
+
+      - name: Run Molecule Hetzner scenario
+        if: ${{ steps.hcloud.outputs.enabled == 'true' }}
+        working-directory: extensions
+        run: |
+          set -o pipefail
+          molecule test -s hetzner | tee "../.ci_artifacts/molecule-${{ matrix.scenario }}-${{ matrix.distro }}.log"
+        env:
+          ANSIBLE_LOCAL_TEMP: /tmp/ansible-local
+          ANSIBLE_REMOTE_TEMP: /tmp/ansible-remote
+          ANSIBLE_HOME: /tmp/.ansible
+          MOLECULE_HCLOUD_DISTRO: ${{ matrix.distro }}
+          MOLECULE_HCLOUD_SCENARIO: ${{ matrix.scenario }}
+          HCLOUD_SERVER_TYPE: ${{ vars.HCLOUD_SERVER_TYPE || 'cx33' }}
+          HCLOUD_LOCATION: ${{ vars.HCLOUD_LOCATION || 'fsn1' }}
+          HCLOUD_FALLBACK_LOCATIONS: ${{ vars.HCLOUD_FALLBACK_LOCATIONS || 'nbg1,hel1' }}
+          PY_COLORS: "1"
+          ANSIBLE_FORCE_COLOR: "1"
+
+      - name: Upload CI artifacts
+        if: ${{ always() && steps.hcloud.outputs.enabled == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: hetzner-${{ matrix.scenario }}-${{ matrix.distro }}
+          path: .ci_artifacts/
+          if-no-files-found: ignore
+          include-hidden-files: true
+
+  hetzner-cleanup:
+    name: Hetzner Cleanup
+    if: ${{ always() && github.event.pull_request.head.repo.fork == false }}
+    runs-on: ubuntu-latest
+    needs: hetzner-e2e
+    env:
+      HCLOUD_TOKEN: ${{ secrets.HCLOUD_TOKEN }}
+    steps:
+      - name: Check Hetzner token
+        id: hcloud
+        run: |
+          if [ -n "${HCLOUD_TOKEN}" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "HCLOUD_TOKEN is not configured. Cleanup is skipped."
+          fi
+
+      - name: Install dependencies
+        if: ${{ steps.hcloud.outputs.enabled == 'true' }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq
+
+      - name: Setup hcloud CLI
+        if: ${{ steps.hcloud.outputs.enabled == 'true' }}
+        uses: hetznercloud/setup-hcloud@v1
+
+      - name: Cleanup leaked run resources
+        if: ${{ steps.hcloud.outputs.enabled == 'true' }}
+        run: |
+          set -euo pipefail
+          prefix="mol-${GITHUB_RUN_ID}-"
+          echo "Cleaning resources with prefix: ${prefix}"
+
+          # Delete servers
+          mapfile -t server_ids < <(
+            hcloud server list --output json \
+              | jq -r --arg prefix "${prefix}" '.[] | select(.name | startswith($prefix)) | .id'
+          )
+          for server_id in "${server_ids[@]}"; do
+            if [ -n "${server_id}" ]; then
+              echo "Deleting server: ${server_id}"
+              hcloud server delete "${server_id}" || true
+            fi
+          done
+
+          # Delete networks (pihole-cluster creates private networks)
+          mapfile -t network_ids < <(
+            hcloud network list --output json \
+              | jq -r --arg prefix "${prefix}" '.[] | select(.name | startswith($prefix)) | .id'
+          )
+          for network_id in "${network_ids[@]}"; do
+            if [ -n "${network_id}" ]; then
+              echo "Deleting network: ${network_id}"
+              hcloud network delete "${network_id}" || true
+            fi
+          done
+
+          # Delete SSH keys
+          mapfile -t ssh_key_ids < <(
+            hcloud ssh-key list --output json \
+              | jq -r --arg prefix "${prefix}" '.[] | select(.name | startswith($prefix)) | .id'
+          )
+          for ssh_key_id in "${ssh_key_ids[@]}"; do
+            if [ -n "${ssh_key_id}" ]; then
+              echo "Deleting SSH key: ${ssh_key_id}"
+              hcloud ssh-key delete "${ssh_key_id}" || true
+            fi
+          done
+
+          echo "Cleanup complete"

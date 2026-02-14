@@ -1,0 +1,65 @@
+---
+- name: Prepare Hetzner instances for Pi-hole cluster testing
+  hosts: pihole_cluster
+  become: true
+  gather_facts: true
+
+  tasks:
+    - name: Stop systemd-resolved if running (may manage resolv.conf)
+      ansible.builtin.systemd:
+        name: systemd-resolved
+        state: stopped
+        enabled: false
+      failed_when: false
+
+    - name: Configure DNS resolvers (overwrite resolv.conf)
+      ansible.builtin.copy:
+        content: |
+          # Configured by molecule prepare
+          nameserver 1.1.1.1
+          nameserver 8.8.8.8
+          nameserver 9.9.9.9
+        dest: /etc/resolv.conf
+        mode: "0644"
+
+    - name: Wait for DNS to be functional
+      ansible.builtin.command: getent hosts github.com
+      register: _dns_check
+      retries: 12
+      delay: 5
+      until: _dns_check.rc == 0
+      changed_when: false
+
+    - name: Install required packages for testing (Debian)
+      ansible.builtin.apt:
+        name:
+          - dnsutils
+          - curl
+          - iproute2
+        state: present
+        update_cache: true
+      retries: 3
+      delay: 10
+      register: _apt_install
+      until: _apt_install is success
+      when: ansible_os_family == "Debian"
+
+    - name: Install required packages for testing (RedHat)
+      ansible.builtin.dnf:
+        name:
+          - bind-utils
+          - curl
+          - iproute
+        state: present
+      retries: 3
+      delay: 10
+      register: _dnf_install
+      until: _dnf_install is success
+      when: ansible_os_family == "RedHat"
+
+    - name: Display host information
+      ansible.builtin.debug:
+        msg:
+          - "Host: {{ inventory_hostname }}"
+          - "OS: {{ ansible_distribution }} {{ ansible_distribution_version }}"
+          - "IP: {{ ansible_default_ipv4.address | default('N/A') }}"

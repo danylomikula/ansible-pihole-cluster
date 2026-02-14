@@ -4,14 +4,14 @@ services:
     container_name: nebula-sync
     restart: unless-stopped
     environment:
-      PRIMARY: "http://{{ ansible_host }}|{{ pihole_webpassword }}"
-      REPLICAS: "{% for backup_host in groups['backup'] %}http://{{ hostvars[backup_host].ansible_host }}|{{ pihole_webpassword }}{% if not loop.last %},{% endif %}{% endfor %}"
+      PRIMARY: "http://{{ ansible_host }}|${PIHOLE_PASSWORD}"
+      REPLICAS: "{% for backup_host in groups['backup'] %}http://{{ hostvars[backup_host].ansible_host }}|${PIHOLE_PASSWORD}{% if not loop.last %},{% endif %}{% endfor %}"
       FULL_SYNC: "{{ nebula_sync_full_sync }}"
       RUN_GRAVITY: "{{ nebula_sync_run_gravity }}"
       CRON: "{{ nebula_sync_cron }}"
       CLIENT_SKIP_TLS_VERIFICATION: "{{ nebula_sync_client_skip_tls_verification }}"
-      {% if nebula_sync_full_sync == 'false' %}
-      {% for key, val in nebula_sync_additional_settings | dictsort %}
+{% if not nebula_sync_full_sync | bool %}
+{% for key, val in nebula_sync_additional_settings | dictsort %}
       {{ key }}: "{{ val }}"
-      {% endfor %}
-      {% endif %}
+{% endfor %}
+{% endif %}

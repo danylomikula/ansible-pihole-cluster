@@ -1,0 +1,56 @@
+---
+dependencies: []
+
+argument_specs:
+  main:
+    short_description: Install and configure pihole-updatelists
+    description:
+      - Installs pihole-updatelists for automated blocklist management
+      - Configures blocklist sources from Firebog and other providers
+      - Updates gravity database with new lists
+    options:
+      pihole_updatelists_enabled:
+        type: bool
+        required: false
+        default: true
+        description: Enable pihole-updatelists service
+      pihole_updatelists_blocklists_url:
+        type: str
+        required: false
+        default: "https://v.firebog.net/hosts/lists.php?type=nocross"
+        description: URL containing list of blocklist URLs
+      pihole_updatelists_blacklist_url:
+        type: str
+        required: false
+        default: ""
+        description: URL for exact domain blacklist
+      pihole_updatelists_whitelist_url:
+        type: str
+        required: false
+        default: "https://raw.githubusercontent.com/anudeepND/whitelist/master/domains/whitelist.txt"
+        description: URL for exact domain whitelist
+      pihole_updatelists_allowlists_url:
+        type: str
+        required: false
+        default: ""
+        description: URL containing list of allowlist URLs
+      pihole_updatelists_regex_blacklist_url:
+        type: str
+        required: false
+        default: "https://raw.githubusercontent.com/mmotti/pihole-regex/master/regex.list"
+        description: URL for regex blacklist rules
+      pihole_updatelists_regex_whitelist_url:
+        type: str
+        required: false
+        default: "https://raw.githubusercontent.com/mmotti/pihole-regex/master/whitelist.list"
+        description: URL for regex whitelist rules
+      pihole_updatelists_interval:
+        type: str
+        required: false
+        default: "24h"
+        description: Update interval (e.g., 12h, 24h, weekly)
+      pihole_updatelists_run_now:
+        type: bool
+        required: false
+        default: true
+        description: Run pihole-updatelists immediately after installation

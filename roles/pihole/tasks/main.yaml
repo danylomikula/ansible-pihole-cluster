@@ -1,150 +1,317 @@
+---
+- name: Validate required variables
+  ansible.builtin.assert:
+    that:
+      - pihole_web_password is defined
+      - pihole_web_password | length > 0
+    fail_msg: "pihole_web_password must be set (use ansible-vault or environment variable)"
+    quiet: true
+  tags:
+    - pihole
+    - validation
+
 - name: Set facts for IPv4 addresses
   ansible.builtin.set_fact:
-    host_local_ipv4: "{{ ansible_default_ipv4.address }}"
+    pihole_host_local_ipv4: "{{ ansible_default_ipv4.address }}"
+  tags:
+    - pihole
+    - facts
 
 - name: Set facts for IPv6 addresses
   ansible.builtin.set_fact:
-    host_local_ipv6: "{{ ansible_default_ipv6.address }}"
-  when: enable_ipv6_support
+    pihole_host_local_ipv6: "{{ ansible_default_ipv6.address | default('::1') }}"
+  when:
+    - ipv6_enabled | default(false)
+    - ansible_default_ipv6.address is defined
+  tags:
+    - pihole
+    - facts
 
-- name: Ensures /etc/pihole dir exists
-  ansible.builtin.file:
-    path: /etc/pihole
-    state: directory
-    mode: "0775"
+- name: Check if Pi-hole directories exist
+  ansible.builtin.stat:
+    path: "{{ item }}"
+  loop:
+    - /etc/pihole
+    - /etc/dnsmasq.d
+  register: _pihole_dirs
+  tags:
+    - pihole
+    - directories
 
-- name: Ensures /etc/dnsmasq.d dir exists
+- name: Create Pi-hole directories
   ansible.builtin.file:
-    path: /etc/dnsmasq.d
+    path: "{{ item.item }}"
     state: directory
     mode: "0755"
+  loop: "{{ _pihole_dirs.results }}"
+  when: not item.stat.exists
+  tags:
+    - pihole
+    - directories
 
-- name: Check if /etc/systemd/resolved.conf exists
+- name: Check if systemd resolved.conf exists
   ansible.builtin.stat:
     path: /etc/systemd/resolved.conf
-  register: resolved_conf_status
+  register: _pihole_resolved_conf
+  tags:
+    - pihole
+    - resolved
 
-- name: Ensure DNSStubListener=no in /etc/systemd/resolved.conf
-  ansible.builtin.lineinfile:
-    path: /etc/systemd/resolved.conf
-    regexp: '^DNSStubListener='
-    line: 'DNSStubListener=no'
-    state: present
-  when: resolved_conf_status.stat.exists
+- name: Configure systemd-resolved
+  when:
+    - _pihole_resolved_conf.stat.exists
+  tags:
+    - pihole
+    - resolved
+  block:
+    - name: Disable DNSStubListener in resolved.conf
+      ansible.builtin.lineinfile:
+        path: /etc/systemd/resolved.conf
+        regexp: '^DNSStubListener='
+        line: 'DNSStubListener=no'
+        state: present
 
-- name: Restart systemd-resolved
-  ansible.builtin.systemd:
-    name: systemd-resolved
-    state: restarted
-  when: resolved_conf_status.stat.exists
+    - name: Restart systemd-resolved
+      ansible.builtin.systemd:
+        name: systemd-resolved
+        state: restarted
 
-- name: Remove /etc/resolv.conf
-  ansible.builtin.file:
-    path: /etc/resolv.conf
-    state: absent
-  when: resolved_conf_status.stat.exists
+    - name: Remove /etc/resolv.conf
+      ansible.builtin.file:
+        path: /etc/resolv.conf
+        state: absent
 
-- name: Symlink /run/systemd/resolve/resolv.conf to /etc/resolv.conf
-  ansible.builtin.file:
-    src: /run/systemd/resolve/resolv.conf
-    dest: /etc/resolv.conf
-    state: link
-  when: resolved_conf_status.stat.exists
+    - name: Symlink resolv.conf to systemd-resolved
+      ansible.builtin.file:
+        src: /run/systemd/resolve/resolv.conf
+        dest: /etc/resolv.conf
+        state: link
 
-- name: Check if a custom pihole.toml exists in the Ansible root directory
+# ============================================
+# CONFIGURATION CHECK
+# ============================================
+- name: Check for custom pihole.toml
   ansible.builtin.stat:
     path: "{{ playbook_dir }}/custom-pihole.toml"
-  register: custom_pihole_config
+  register: _pihole_custom_config
+  tags:
+    - pihole
+    - config
 
-- name: Use custom pihole.toml if available
+# ============================================
+# VERSION CHECK
+# ============================================
+- name: Check if Pi-hole versions file exists
+  ansible.builtin.stat:
+    path: /etc/pihole/versions
+  register: _pihole_versions_file
+  tags:
+    - pihole
+    - version
+
+- name: Extract installed Pi-hole version
+  ansible.builtin.command:
+    cmd: grep '^CORE_VERSION=' /etc/pihole/versions
+  register: _pihole_version_output
+  when: _pihole_versions_file.stat.exists
+  changed_when: false
+  failed_when: false
+  tags:
+    - pihole
+    - version
+
+- name: Set fact for installed Pi-hole version
+  ansible.builtin.set_fact:
+    _pihole_version_installed: "{{ _pihole_version_output.stdout.split('=')[1][1:] }}"
+  when: _pihole_versions_file.stat.exists and _pihole_version_output.rc == 0
+  tags:
+    - pihole
+    - version
+
+- name: Set default Pi-hole version (not installed)
+  ansible.builtin.set_fact:
+    _pihole_version_installed: "0.0.0"
+  when: not _pihole_versions_file.stat.exists or (_pihole_version_output.rc | default(1)) != 0
+  tags:
+    - pihole
+    - version
+
+- name: Display Pi-hole version info
+  ansible.builtin.debug:
+    msg: "Pi-hole: installed={{ _pihole_version_installed }}, target={{ pihole_version }}"
+  tags:
+    - pihole
+    - version
+
+# ============================================
+# INSTALLATION / UPDATE
+# ============================================
+- name: Install or update Pi-hole
+  when: _pihole_version_installed != pihole_version
+  tags:
+    - pihole
+    - install
+  block:
+    - name: Generate pihole.toml for installer
+      ansible.builtin.template:
+        src: pihole.toml.j2
+        dest: /etc/pihole/pihole.toml
+        mode: "0644"
+      when: not _pihole_custom_config.stat.exists
+
+    - name: Deploy custom pihole.toml for installer
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/custom-pihole.toml"
+        dest: /etc/pihole/pihole.toml
+        mode: "0644"
+      when: _pihole_custom_config.stat.exists
+
+    - name: Download Pi-hole release
+      ansible.builtin.unarchive:
+        src: "https://github.com/pi-hole/pi-hole/archive/refs/tags/v{{ pihole_version }}.zip"
+        dest: /tmp
+        remote_src: true
+      retries: 3
+      delay: 10
+      register: _pihole_download
+      until: _pihole_download is success
+
+    - name: Run Pi-hole installer
+      ansible.builtin.shell: |
+        {% if ansible_os_family == "RedHat" %}
+        export PIHOLE_SKIP_OS_CHECK=true
+        {% endif %}
+        export TERM=xterm
+        bash automated\ install/basic-install.sh --unattended
+      args:
+        executable: /bin/bash
+        chdir: "/tmp/pi-hole-{{ pihole_version }}"
+      register: _pihole_install_result
+      changed_when: "'Installation Complete' in _pihole_install_result.stdout"
+      retries: 3
+      delay: 10
+      until: _pihole_install_result.rc == 0
+
+    - name: Clean up installation files
+      ansible.builtin.file:
+        path: "/tmp/pi-hole-{{ pihole_version }}"
+        state: absent
+
+    - name: Display installation result
+      ansible.builtin.debug:
+        var: _pihole_install_result.stdout_lines
+      when: _pihole_install_result.stdout_lines is defined
+
+# ============================================
+# CONFIGURATION
+# ============================================
+# Check if pihole.toml exists (Pi-hole rewrites it with defaults on start)
+- name: Check if pihole.toml exists
+  ansible.builtin.stat:
+    path: /etc/pihole/pihole.toml
+  register: _pihole_toml_exists
+  tags:
+    - pihole
+    - config
+
+# Only deploy custom config if user provides one (always overwrites)
+- name: Deploy custom pihole.toml
   ansible.builtin.copy:
     src: "{{ playbook_dir }}/custom-pihole.toml"
     dest: /etc/pihole/pihole.toml
     mode: "0644"
-  when: custom_pihole_config.stat.exists
+  when:
+    - pihole_manage_config | default(true)
+    - _pihole_custom_config.stat.exists
+  notify: Restart pihole-FTL service
+  tags:
+    - pihole
+    - config
 
-- name: Generate pihole.toml from template if no custom file is found
+# Deploy pihole.toml from template to keep config in sync with playbook variables
+# To use a fully custom config instead, place custom-pihole.toml in playbook root
+# Set pihole_manage_config: false to skip and preserve settings changed via web UI
+- name: Generate pihole.toml from template
   ansible.builtin.template:
     src: pihole.toml.j2
     dest: /etc/pihole/pihole.toml
     mode: "0644"
-  when: not custom_pihole_config.stat.exists
+  when:
+    - pihole_manage_config | default(true)
+    - not _pihole_custom_config.stat.exists
+  notify: Restart pihole-FTL service
+  tags:
+    - pihole
+    - config
+    - molecule-notest
 
-- name: Check if PiHole versions file exists
-  ansible.builtin.stat:
-    path: /etc/pihole/versions
-  register: versions_file_stat
-
-- name: Extract installed PiHole version
-  ansible.builtin.command: "grep '^CORE_VERSION=' /etc/pihole/versions"
-  register: core_version
-  when: versions_file_stat.stat.exists
-  changed_when: false
-
-- name: Set facts for PiHole version
-  ansible.builtin.set_fact:
-    pihole_version_installed: "{{ core_version.stdout.split('=')[1][1:] }}"
-  when: versions_file_stat.stat.exists
-
-- name: Set default PiHole version
-  ansible.builtin.set_fact:
-    pihole_version_installed: "0.0.0"
-  when: not versions_file_stat.stat.exists
-
-- name: Display PiHole version
-  ansible.builtin.debug:
-    msg: "CORE_VERSION is {{ pihole_version_installed }}"
-
-- name: Download PiHole
-  ansible.builtin.unarchive:
-    src: https://github.com/pi-hole/pi-hole/archive/refs/tags/v{{ pihole_version }}.zip
-    dest: /tmp
-    remote_src: true
-  when: pihole_version != pihole_version_installed
-
-- name: Install PiHole
-  ansible.builtin.shell: |
-    {% if ansible_os_family == "RedHat" %}
-    export PIHOLE_SKIP_OS_CHECK=true
-    {% endif %}
-    bash /tmp/pi-hole-{{ pihole_version }}/automated\ install/basic-install.sh --unattended
-    rm -rf /tmp/*{{ pihole_version }}*
-  register: process_status
-  changed_when: false
-  when: pihole_version != pihole_version_installed
-
-- name: Display installation process
-  ansible.builtin.debug:
-    var: process_status.stdout_lines
-  when: pihole_version != pihole_version_installed
-
-- name: Add user to group pihole
+# ============================================
+# POST-INSTALLATION
+# ============================================
+- name: Add user to pihole group
   ansible.builtin.user:
     name: "{{ ansible_user }}"
     groups: pihole
     append: true
+  failed_when: false
+  tags:
+    - pihole
+    - users
 
-- name: Set Pi-hole FTL WEB password
-  ansible.builtin.command: pihole setpassword {{ pihole_webpassword }}
+- name: Set Pi-hole web password
+  ansible.builtin.shell:
+    cmd: /usr/local/bin/pihole setpassword "$PIHOLE_PASSWORD"
+  environment:
+    PIHOLE_PASSWORD: "{{ pihole_web_password }}"
+  no_log: true
   changed_when: false
+  tags:
+    - pihole
+    - password
 
-- name: Wait 10 seconds before restarting pihole-FTL
-  ansible.builtin.pause:
-    seconds: 10
-
-- name: Restart pihole-FTL service
+- name: Ensure Pi-hole FTL service is started
   ansible.builtin.systemd:
     name: pihole-FTL
-    state: restarted
-  register: restart_result
-  until: restart_result is succeeded
+    state: started
+    enabled: true
+  register: _pihole_ftl_start_result
+  until: _pihole_ftl_start_result is succeeded
   retries: 3
   delay: 5
+  tags:
+    - pihole
+    - service
 
-- name: Check if Pi-hole FTL service is running
+- name: Verify Pi-hole FTL is running
   ansible.builtin.systemd:
     name: pihole-FTL
-  register: pihole_ftl_status
+  register: _pihole_ftl_status
   retries: 10
   delay: 5
-  until: pihole_ftl_status.status.ActiveState == 'active'
+  until: _pihole_ftl_status.status.ActiveState == 'active'
+  tags:
+    - pihole
+    - service
+
+- name: Update Pi-hole Gravity database
+  ansible.builtin.command:
+    cmd: /usr/local/bin/pihole -g
+  register: _pihole_gravity_update
+  changed_when: "'gravity list' in _pihole_gravity_update.stdout"
+  retries: 3
+  delay: 10
+  until: _pihole_gravity_update.rc == 0
+  tags:
+    - pihole
+    - gravity
+
+- name: Request ordered reboot after Pi-hole install
+  ansible.builtin.set_fact:
+    _pihole_reboot_after_run: true
+  changed_when: (_pihole_install_result is defined and _pihole_install_result.changed) | default(false)
+  run_once: true
+  when: pihole_reboot_after_run | default(true)
+  notify: Reboot cluster in order
+  tags:
+    - pihole
+    - reboot

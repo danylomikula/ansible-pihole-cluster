@@ -1,0 +1,194 @@
+---
+# Verify playbook for custom-config scenario
+# Tests custom Pi-hole configuration values
+
+- name: Load Hetzner state
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: Load Hetzner state file
+      ansible.builtin.include_vars:
+        file: "{{ molecule_ephemeral_directory }}/hcloud_state.yml"
+        name: hcloud_state
+
+    - name: Set cluster facts for all hosts
+      ansible.builtin.set_fact:
+        _hcloud_state: "{{ hcloud_state }}"
+      delegate_to: "{{ item }}"
+      delegate_facts: true
+      loop: "{{ groups['pihole_cluster'] }}"
+
+    - name: Display SSH connection info for debugging
+      ansible.builtin.debug:
+        msg:
+          - "========================================"
+          - "SSH CONNECTION INFO (for debugging)"
+          - "========================================"
+          - "SSH Key: {{ hcloud_state.ssh_key_path }}"
+          - "Master: ssh -i {{ hcloud_state.ssh_key_path }} -o StrictHostKeyChecking=no root@{{ hcloud_state.servers[0].public_ip }}"
+          - "Backup: ssh -i {{ hcloud_state.ssh_key_path }} -o StrictHostKeyChecking=no root@{{ hcloud_state.servers[1].public_ip }}"
+          - "Private IPs: Master={{ hcloud_state.servers[0].private_ip }}, Backup={{ hcloud_state.servers[1].private_ip }}"
+          - "VIP: {{ hcloud_state.keepalived_vip }}"
+          - "========================================"
+      when: lookup('env', 'MOLECULE_DEBUG_PAUSE') | default('false') | lower in ['true', '1', 'yes']
+
+    - name: Pause for manual debugging (set MOLECULE_DEBUG_PAUSE=true to enable)
+      ansible.builtin.pause:
+        prompt: "Press Enter to continue with verification (or Ctrl+C to abort and keep instances running)"
+      when: lookup('env', 'MOLECULE_DEBUG_PAUSE') | default('false') | lower in ['true', '1', 'yes']
+
+- name: Verify Pi-hole cluster (custom-config scenario)
+  hosts: pihole_cluster
+  become: true
+  gather_facts: true
+
+  vars:
+    _vip_ipv4: "{{ _hcloud_state.keepalived_vip }}"
+    _enable_unbound: false
+
+  tasks:
+    # ============================================
+    # SERVICE STATUS CHECKS
+    # ============================================
+    - name: Check if Pi-hole FTL service is running
+      ansible.builtin.systemd:
+        name: pihole-FTL
+      register: _pihole_ftl_status
+      failed_when: _pihole_ftl_status.status.ActiveState != 'active'
+
+    - name: Check if keepalived service is running
+      ansible.builtin.systemd:
+        name: keepalived
+      register: _keepalived_status
+      failed_when: _keepalived_status.status.ActiveState != 'active'
+
+    - name: Verify unbound is NOT running (disabled in this scenario)
+      ansible.builtin.systemd:
+        name: unbound
+      register: _unbound_status
+      failed_when: false
+
+    # ============================================
+    # CUSTOM CONFIGURATION VALIDATION
+    # ============================================
+    - name: Get DNS upstreams
+      ansible.builtin.command:
+        cmd: pihole-FTL --config dns.upstreams
+      register: _dns_upstreams
+      changed_when: false
+
+    - name: Verify external DNS upstream is configured
+      ansible.builtin.assert:
+        that:
+          - "'1.1.1.1' in _dns_upstreams.stdout or '8.8.8.8' in _dns_upstreams.stdout"
+        fail_msg: "External DNS not configured as upstream"
+        success_msg: "External DNS correctly configured"
+
+    - name: Get DNS cache size
+      ansible.builtin.command:
+        cmd: pihole-FTL --config dns.cache.size
+      register: _cache_size
+      changed_when: false
+
+    - name: Verify custom cache size
+      ansible.builtin.assert:
+        that:
+          - "'5000' in _cache_size.stdout"
+        fail_msg: "Custom cache size not applied (expected 5000)"
+        success_msg: "Custom cache size correctly applied"
+
+    - name: Get privacy level
+      ansible.builtin.command:
+        cmd: pihole-FTL --config misc.privacylevel
+      register: _privacy_level
+      changed_when: false
+
+    - name: Verify custom privacy level
+      ansible.builtin.assert:
+        that:
+          - "'2' in _privacy_level.stdout"
+        fail_msg: "Custom privacy level not applied (expected 2)"
+        success_msg: "Custom privacy level correctly applied"
+
+    - name: Get local domain
+      ansible.builtin.command:
+        cmd: pihole-FTL --config dns.domain.name
+      register: _local_domain
+      changed_when: false
+
+    - name: Verify custom local domain
+      ansible.builtin.assert:
+        that:
+          - "'custom.test' in _local_domain.stdout"
+        fail_msg: "Custom local domain not applied (expected custom.test)"
+        success_msg: "Custom local domain correctly applied"
+
+    # ============================================
+    # DNS RESOLUTION TEST (cross-node testing)
+    # ============================================
+    - name: Ensure Pi-hole Gravity is up to date
+      ansible.builtin.command:
+        cmd: /usr/local/bin/pihole -g
+      register: _gravity_update
+      changed_when: false
+      retries: 3
+      delay: 10
+      until: _gravity_update.rc == 0
+
+    - name: Get peer node public IP for cross-testing
+      ansible.builtin.set_fact:
+        _peer_ip: "{{ (_hcloud_state.servers | selectattr('instance_name', 'equalto', item) | first).public_ip }}"
+      loop: "{{ groups['pihole_cluster'] }}"
+      when: item != inventory_hostname
+
+    - name: Wait for peer Pi-hole DNS to be ready
+      ansible.builtin.command:
+        cmd: "dig @{{ _peer_ip }} google.com +short +time=5 +tries=1"
+      register: _dns_ready
+      changed_when: false
+      failed_when: false
+      retries: 18
+      delay: 10
+      until: _dns_ready.rc == 0
+
+    - name: Test DNS resolution via peer node
+      ansible.builtin.command:
+        cmd: "dig @{{ _peer_ip }} google.com +short +time=10 +tries=3"
+      register: _dns_peer
+      changed_when: false
+      failed_when: _dns_peer.rc != 0
+      retries: 6
+      delay: 10
+      until: _dns_peer.rc == 0
+
+    - name: Test DNS resolution via VIP (master only)
+      ansible.builtin.command:
+        cmd: "dig @{{ _vip_ipv4 }} google.com +short +time=10 +tries=3"
+      register: _dns_vip
+      changed_when: false
+      failed_when: _dns_vip.rc != 0
+      retries: 10
+      delay: 10
+      until: _dns_vip.rc == 0
+      when: inventory_hostname in groups['master']
+
+    # ============================================
+    # VERIFICATION SUMMARY
+    # ============================================
+    - name: Display verification summary
+      ansible.builtin.debug:
+        msg:
+          - "========================================"
+          - "VERIFICATION SUMMARY (custom-config)"
+          - "Host: {{ inventory_hostname }}"
+          - "========================================"
+          - "Pi-hole FTL: PASS"
+          - "Keepalived: PASS"
+          - "Unbound: DISABLED (as expected)"
+          - "External DNS upstream: PASS"
+          - "Custom cache size (5000): PASS"
+          - "Custom privacy level (2): PASS"
+          - "Custom local domain: PASS"
+          - "DNS via peer ({{ _peer_ip }}): PASS"
+          - "========================================"

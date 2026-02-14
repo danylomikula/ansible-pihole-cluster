@@ -1,0 +1,188 @@
+---
+# Verify playbook for no-unbound scenario
+# Tests Pi-hole with external DNS (no local Unbound)
+
+- name: Load Hetzner state
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: Load Hetzner state file
+      ansible.builtin.include_vars:
+        file: "{{ molecule_ephemeral_directory }}/hcloud_state.yml"
+        name: hcloud_state
+
+    - name: Set cluster facts for all hosts
+      ansible.builtin.set_fact:
+        _hcloud_state: "{{ hcloud_state }}"
+      delegate_to: "{{ item }}"
+      delegate_facts: true
+      loop: "{{ groups['pihole_cluster'] }}"
+
+    - name: Display SSH connection info for debugging
+      ansible.builtin.debug:
+        msg:
+          - "========================================"
+          - "SSH CONNECTION INFO (for debugging)"
+          - "========================================"
+          - "SSH Key: {{ hcloud_state.ssh_key_path }}"
+          - "Master: ssh -i {{ hcloud_state.ssh_key_path }} -o StrictHostKeyChecking=no root@{{ hcloud_state.servers[0].public_ip }}"
+          - "Backup: ssh -i {{ hcloud_state.ssh_key_path }} -o StrictHostKeyChecking=no root@{{ hcloud_state.servers[1].public_ip }}"
+          - "Private IPs: Master={{ hcloud_state.servers[0].private_ip }}, Backup={{ hcloud_state.servers[1].private_ip }}"
+          - "VIP: {{ hcloud_state.keepalived_vip }}"
+          - "========================================"
+      when: lookup('env', 'MOLECULE_DEBUG_PAUSE') | default('false') | lower in ['true', '1', 'yes']
+
+    - name: Pause for manual debugging (set MOLECULE_DEBUG_PAUSE=true to enable)
+      ansible.builtin.pause:
+        prompt: "Press Enter to continue with verification (or Ctrl+C to abort and keep instances running)"
+      when: lookup('env', 'MOLECULE_DEBUG_PAUSE') | default('false') | lower in ['true', '1', 'yes']
+
+- name: Verify Pi-hole cluster (no-unbound scenario)
+  hosts: pihole_cluster
+  become: true
+  gather_facts: true
+
+  vars:
+    _vip_ipv4: "{{ _hcloud_state.keepalived_vip }}"
+
+  tasks:
+    # ============================================
+    # SERVICE STATUS CHECKS
+    # ============================================
+    - name: Check if Pi-hole FTL service is running
+      ansible.builtin.systemd:
+        name: pihole-FTL
+      register: _pihole_ftl_status
+      failed_when: _pihole_ftl_status.status.ActiveState != 'active'
+
+    - name: Check if keepalived service is running
+      ansible.builtin.systemd:
+        name: keepalived
+      register: _keepalived_status
+      failed_when: _keepalived_status.status.ActiveState != 'active'
+
+    - name: Verify unbound is NOT installed or running
+      ansible.builtin.systemd:
+        name: unbound
+      register: _unbound_status
+      failed_when: false
+
+    - name: Assert unbound is not active
+      ansible.builtin.assert:
+        that:
+          - _unbound_status.status.ActiveState | default('inactive') != 'active'
+        fail_msg: "Unbound should NOT be running in this scenario"
+        success_msg: "Unbound correctly not running"
+
+    # ============================================
+    # EXTERNAL DNS CONFIGURATION CHECK
+    # ============================================
+    - name: Get DNS upstreams
+      ansible.builtin.command:
+        cmd: pihole-FTL --config dns.upstreams
+      register: _dns_upstreams
+      changed_when: false
+
+    - name: Verify external DNS upstreams are configured
+      ansible.builtin.assert:
+        that:
+          - "'1.1.1.1' in _dns_upstreams.stdout or '1.0.0.1' in _dns_upstreams.stdout"
+          - "'127.0.0.1#5335' not in _dns_upstreams.stdout"
+        fail_msg: "External DNS not properly configured or unbound still present"
+        success_msg: "External DNS (Cloudflare) correctly configured"
+
+    - name: Verify port 5335 is NOT listening
+      ansible.builtin.shell:
+        cmd: set -o pipefail && ss -tlnp 2>/dev/null | grep ':5335' || echo "not listening"
+        executable: /bin/bash
+      register: _port_5335
+      changed_when: false
+
+    - name: Assert unbound port is not listening
+      ansible.builtin.assert:
+        that:
+          - "'not listening' in _port_5335.stdout"
+        fail_msg: "Port 5335 should NOT be listening (unbound disabled)"
+        success_msg: "Port 5335 correctly not listening"
+
+    # ============================================
+    # DNS RESOLUTION TESTS (cross-node testing)
+    # ============================================
+    - name: Ensure Pi-hole Gravity is up to date
+      ansible.builtin.command:
+        cmd: /usr/local/bin/pihole -g
+      register: _gravity_update
+      changed_when: false
+      retries: 3
+      delay: 10
+      until: _gravity_update.rc == 0
+
+    - name: Get peer node public IP for cross-testing
+      ansible.builtin.set_fact:
+        _peer_ip: "{{ (_hcloud_state.servers | selectattr('instance_name', 'equalto', item) | first).public_ip }}"
+      loop: "{{ groups['pihole_cluster'] }}"
+      when: item != inventory_hostname
+
+    - name: Wait for peer Pi-hole DNS to be ready
+      ansible.builtin.command:
+        cmd: "dig @{{ _peer_ip }} google.com +short +time=5 +tries=1"
+      register: _dns_ready
+      changed_when: false
+      failed_when: false
+      retries: 18
+      delay: 10
+      until: _dns_ready.rc == 0
+
+    - name: Test DNS resolution via peer node
+      ansible.builtin.command:
+        cmd: "dig @{{ _peer_ip }} google.com +short +time=10 +tries=3"
+      register: _dns_peer
+      changed_when: false
+      failed_when: _dns_peer.rc != 0
+      retries: 6
+      delay: 10
+      until: _dns_peer.rc == 0
+
+    - name: Test DNS resolution via VIP (master only)
+      ansible.builtin.command:
+        cmd: "dig @{{ _vip_ipv4 }} google.com +short +time=10 +tries=3"
+      register: _dns_vip
+      changed_when: false
+      failed_when: _dns_vip.rc != 0
+      retries: 10
+      delay: 10
+      until: _dns_vip.rc == 0
+      when: inventory_hostname in groups['master']
+
+    # ============================================
+    # VIP ASSIGNMENT CHECK
+    # ============================================
+    - name: Check VIP is assigned on master
+      ansible.builtin.shell:
+        cmd: "set -o pipefail && ip addr show | grep {{ _vip_ipv4 }}"
+        executable: /bin/bash
+      register: _vip_assigned
+      changed_when: false
+      failed_when: _vip_assigned.rc != 0
+      when: inventory_hostname in groups['master']
+
+    # ============================================
+    # VERIFICATION SUMMARY
+    # ============================================
+    - name: Display verification summary
+      ansible.builtin.debug:
+        msg:
+          - "========================================"
+          - "VERIFICATION SUMMARY (no-unbound)"
+          - "Host: {{ inventory_hostname }}"
+          - "========================================"
+          - "Pi-hole FTL: PASS"
+          - "Keepalived: PASS"
+          - "Unbound: DISABLED (as expected)"
+          - "External DNS configured: PASS"
+          - "Port 5335 not listening: PASS"
+          - "DNS via peer ({{ _peer_ip }}): PASS"
+          - "DNS via VIP: {{ 'PASS' if inventory_hostname in groups['master'] else 'SKIP (backup)' }}"
+          - "VIP assigned: {{ 'PASS' if inventory_hostname in groups['master'] else 'SKIP (backup)' }}"
+          - "========================================"

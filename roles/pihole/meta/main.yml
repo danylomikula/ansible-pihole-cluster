@@ -1,0 +1,306 @@
+---
+dependencies: []
+
+argument_specs:
+  main:
+    short_description: Install and configure Pi-hole
+    description:
+      - Downloads and installs specified Pi-hole version
+      - Generates pihole.toml configuration
+      - Configures web interface password securely
+    options:
+      # Global IPv6 settings (shared across roles)
+      ipv6_enabled:
+        type: bool
+        required: false
+        default: false
+        description: Enable IPv6 support (affects pihole, keepalived, status roles)
+      ipv6_vip:
+        type: str
+        required: false
+        default: "fe80::53/64"
+        description: IPv6 virtual IP address with CIDR notation
+
+      # Installation
+      pihole_version:
+        type: str
+        required: false
+        default: "6.3"
+        description: Pi-hole version to install
+      pihole_web_password:
+        type: str
+        required: true
+        no_log: true
+        description: Web interface password (use ansible-vault)
+
+      # Web interface settings
+      pihole_web_domain:
+        type: str
+        required: false
+        default: "{{ ansible_hostname }}.{{ pihole_local_domain }}"
+        description: Web interface domain
+      pihole_web_port:
+        type: str
+        required: false
+        default: "80o,443os,[::]:80o,[::]:443os"
+        description: Web interface port configuration
+      pihole_web_session_timeout:
+        type: int
+        required: false
+        default: 1800
+        description: Web session timeout in seconds
+      pihole_web_boxed_layout:
+        type: bool
+        required: false
+        default: true
+        description: Use boxed layout for web interface
+      pihole_web_theme:
+        type: str
+        required: false
+        default: "default-auto"
+        choices:
+          - default-auto
+          - default-light
+          - default-dark
+          - default-darker
+          - high-contrast
+          - high-contrast-dark
+          - lcars
+        description: Web interface theme
+      pihole_web_acl:
+        type: str
+        required: false
+        default: ""
+        description: Web interface access control list
+      pihole_web_tls_cert:
+        type: str
+        required: false
+        default: ""
+        description: Path to TLS certificate for web interface
+      pihole_web_paths_webhome:
+        type: str
+        required: false
+        default: ""
+        description: Custom web home path
+      pihole_web_paths_prefix:
+        type: str
+        required: false
+        default: ""
+        description: URL prefix for web interface
+
+      # DNS settings
+      pihole_local_domain:
+        type: str
+        required: false
+        default: "homelab.local"
+        description: Local domain for DNS resolution
+      pihole_local_domain_local:
+        type: bool
+        required: false
+        default: true
+        description: Keep queries local to this domain
+      pihole_interface:
+        type: str
+        required: false
+        default: ""
+        description: Network interface for DNS listening (empty for auto-detection)
+      pihole_socket_listening:
+        type: str
+        required: false
+        default: "ALL"
+        choices:
+          - LOCAL
+          - SINGLE
+          - BIND
+          - ALL
+          - NONE
+        description: DNS query response mode
+      pihole_query_logging:
+        type: bool
+        required: false
+        default: true
+        description: Enable query logging
+      pihole_privacy_level:
+        type: str
+        required: false
+        default: "0"
+        choices:
+          - "0"
+          - "1"
+          - "2"
+          - "3"
+        description: Query logging privacy level (0=full, 3=anonymous)
+      pihole_upstream_dns:
+        type: list
+        elements: str
+        required: false
+        default:
+          - "1.1.1.1"
+          - "1.0.0.1"
+        description: Upstream DNS servers (ignored when unbound is enabled)
+
+      # DNS behavior
+      pihole_cname_deep_inspect:
+        type: bool
+        required: false
+        default: true
+        description: Enable CNAME deep inspection
+      pihole_block_esni:
+        type: bool
+        required: false
+        default: true
+        description: Block encrypted SNI
+      pihole_edns0_ecs:
+        type: bool
+        required: false
+        default: true
+        description: Enable EDNS0 client subnet
+      pihole_ignore_localhost:
+        type: bool
+        required: false
+        default: false
+        description: Ignore queries from localhost
+      pihole_domain_needed:
+        type: bool
+        required: false
+        default: false
+        description: Never forward plain names
+      pihole_bogus_priv:
+        type: bool
+        required: false
+        default: true
+        description: Never forward reverse lookups for private ranges
+      pihole_dns_cache_size:
+        type: int
+        required: false
+        default: 10000
+        description: DNS cache size
+      pihole_dnssec:
+        type: bool
+        required: false
+        default: false
+        description: Enable DNSSEC validation
+      pihole_show_dnssec:
+        type: bool
+        required: false
+        default: true
+        description: Show DNSSEC status in web interface
+
+      # Client resolution
+      pihole_resolve_ipv4:
+        type: bool
+        required: false
+        default: true
+        description: Resolve IPv4 addresses
+      pihole_resolve_ipv6:
+        type: bool
+        required: false
+        default: true
+        description: Resolve IPv6 addresses
+      pihole_network_names:
+        type: bool
+        required: false
+        default: true
+        description: Resolve network device names
+      pihole_refresh_names:
+        type: str
+        required: false
+        default: "IPV4_ONLY"
+        description: Client name refresh mode
+
+      # Rate limiting
+      pihole_rate_limit_count:
+        type: int
+        required: false
+        default: 1000
+        description: Maximum queries per interval
+      pihole_rate_limit_interval:
+        type: int
+        required: false
+        default: 60
+        description: Rate limit interval in seconds
+
+      # Behavior settings
+      pihole_reply_when_busy:
+        type: str
+        required: false
+        default: "DROP"
+        description: How to handle queries when busy
+      pihole_block_mozilla_canary:
+        type: bool
+        required: false
+        default: true
+        description: Block Firefox DNS-over-HTTPS canary domain
+      pihole_block_icloud_pr:
+        type: bool
+        required: false
+        default: true
+        description: Block iCloud Private Relay
+      pihole_ptr:
+        type: str
+        required: false
+        default: "HOSTNAMEFQDN"
+        description: PTR record response type
+
+      # Database settings
+      pihole_max_db_days:
+        type: int
+        required: false
+        default: 91
+        description: Days to retain query history
+      pihole_db_interval:
+        type: int
+        required: false
+        default: 60
+        description: Database update interval in seconds
+
+      # NTP sync settings
+      pihole_ntp_sync_active:
+        type: bool
+        required: false
+        default: true
+        description: Enable NTP synchronization
+      pihole_ntp_sync_server:
+        type: str
+        required: false
+        default: "time.cloudflare.com"
+        description: NTP server address
+      pihole_ntp_sync_interval:
+        type: int
+        required: false
+        default: 3600
+        description: NTP sync interval in seconds
+      pihole_ntp_sync_count:
+        type: int
+        required: false
+        default: 8
+        description: Number of NTP servers to query
+
+      # Optional settings
+      pihole_rev_servers:
+        type: list
+        elements: dict
+        required: false
+        description: Conditional forwarding configuration for reverse DNS
+      local_dns_records:
+        type: str
+        required: false
+        default: ""
+        description: Custom DNS records (one per line)
+      local_cname_records:
+        type: str
+        required: false
+        default: ""
+        description: Custom CNAME records (one per line)
+
+      # Reboot settings
+      pihole_reboot_after_run:
+        type: bool
+        required: false
+        default: true
+        description: Reboot cluster in order after Pi-hole install (master -> backup)
+      pihole_reboot_timeout:
+        type: int
+        required: false
+        default: 900
+        description: Reboot timeout in seconds

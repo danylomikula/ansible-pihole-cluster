@@ -1,0 +1,34 @@
+---
+# Pi-hole Updatelists role defaults
+# https://github.com/jacklul/pihole-updatelists
+
+# Enable pihole-updatelists service
+pihole_updatelists_enabled: true
+
+# Blocklists URL (list of blocklist URLs)
+# https://firebog.net/
+pihole_updatelists_blocklists_url: "https://v.firebog.net/hosts/lists.php?type=nocross"
+
+# Exact domains to blacklist (handcrafted lists only)
+pihole_updatelists_blacklist_url: ""
+
+# Exact domains to whitelist
+# https://github.com/anudeepND/whitelist
+pihole_updatelists_whitelist_url: "https://raw.githubusercontent.com/anudeepND/whitelist/master/domains/whitelist.txt"
+
+# List of allowlists to import
+pihole_updatelists_allowlists_url: ""
+
+# Regex blacklist rules
+# https://github.com/mmotti/pihole-regex
+pihole_updatelists_regex_blacklist_url: "https://raw.githubusercontent.com/mmotti/pihole-regex/master/regex.list"
+
+# Regex whitelist rules
+pihole_updatelists_regex_whitelist_url: "https://raw.githubusercontent.com/mmotti/pihole-regex/master/whitelist.list"
+
+# Update interval (e.g., 12h, 24h, weekly)
+pihole_updatelists_interval: "24h"
+
+# Run pihole-updatelists immediately after installation
+# Set to true to run the script and update gravity during playbook execution
+pihole_updatelists_run_now: true

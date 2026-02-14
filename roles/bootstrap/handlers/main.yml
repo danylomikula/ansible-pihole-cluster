@@ -1,0 +1,4 @@
+---
+- name: Reboot after hostname change
+  ansible.builtin.reboot:
+    msg: "Rebooting machine"

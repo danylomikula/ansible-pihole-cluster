@@ -1,4 +1,5 @@
 .ansible
+.python-version
 custom-pihole.toml
 .env/
 *.log

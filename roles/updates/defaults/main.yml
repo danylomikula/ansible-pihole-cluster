@@ -1,0 +1,8 @@
+---
+# Updates role defaults
+
+# Enable system updates
+updates_enabled: true
+
+# Reboot after updates if required
+updates_reboot: true

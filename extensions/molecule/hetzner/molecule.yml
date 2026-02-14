@@ -1,0 +1,83 @@
+---
+# Molecule configuration for Hetzner Cloud testing
+# Creates 2 servers (master + backup) for Pi-hole cluster testing
+#
+# Environment variables:
+#   HCLOUD_TOKEN           - Required: Hetzner API token
+#   MOLECULE_HCLOUD_DISTRO - Distribution: debian13 (default), ubuntu2404, rockylinux10
+#   MOLECULE_HCLOUD_SCENARIO - Test scenario: default, custom-config, no-unbound
+#   HCLOUD_SERVER_TYPE     - Server type (default: cx33)
+#   HCLOUD_LOCATION        - Primary location (default: fsn1)
+#   MOLECULE_DEBUG_PAUSE   - Set to "1" to pause before verify for manual SSH debugging
+#
+# Usage:
+#   HCLOUD_TOKEN=xxx MOLECULE_HCLOUD_DISTRO=debian13 molecule test -s hetzner
+#
+# Debugging:
+#   # Run with debug pause to SSH into instances before verify
+#   MOLECULE_DEBUG_PAUSE=true HCLOUD_TOKEN=xxx molecule test -s hetzner --destroy=never
+#
+#   # Run only converge (stops before verify, keeps instances)
+#   HCLOUD_TOKEN=xxx molecule converge -s hetzner
+#
+#   # Then manually verify and destroy
+#   molecule verify -s hetzner
+#   molecule destroy -s hetzner
+
+shared_state: false
+
+dependency:
+  name: galaxy
+  options:
+    requirements-file: ${MOLECULE_PROJECT_DIRECTORY}/../requirements.yml
+
+driver:
+  name: default
+  options:
+    managed: true
+
+platforms:
+  - name: pihole-master
+    groups:
+      - master
+      - pihole_cluster
+
+  - name: pihole-backup
+    groups:
+      - backup
+      - pihole_cluster
+
+provisioner:
+  name: ansible
+  playbooks:
+    create: create.yml
+    cleanup: cleanup.yml
+    converge: ${MOLECULE_SCENARIO_DIRECTORY}/scenarios/${MOLECULE_HCLOUD_SCENARIO:-default}.yml
+    prepare: ${MOLECULE_SCENARIO_DIRECTORY}/prepare.yml
+    verify: ${MOLECULE_SCENARIO_DIRECTORY}/verify/${MOLECULE_HCLOUD_SCENARIO:-default}.yml
+    destroy: destroy.yml
+  env:
+    ANSIBLE_ROLES_PATH: ${MOLECULE_PROJECT_DIRECTORY}/../roles
+    ANSIBLE_LOCAL_TEMP: /tmp/ansible-local
+    ANSIBLE_REMOTE_TEMP: /tmp/ansible-remote
+    CI_PROJECT_DIR: ${MOLECULE_PROJECT_DIRECTORY}/..
+  config_options:
+    defaults:
+      deprecation_warnings: false
+      result_format: yaml
+      callbacks_enabled: profile_tasks
+
+verifier:
+  name: ansible
+
+scenario:
+  test_sequence:
+    - syntax
+    - create
+    - prepare
+    - converge
+    # Idempotence skipped: Pi-hole rewrites pihole.toml on startup
+    # and flush_handlers runs handlers that show as "changed"
+    # - idempotence
+    - verify
+    - destroy

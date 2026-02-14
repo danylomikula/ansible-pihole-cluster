@@ -1,0 +1,8 @@
+---
+- name: Cleanup Molecule Hetzner scenario
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: No-op cleanup hook
+      ansible.builtin.meta: noop

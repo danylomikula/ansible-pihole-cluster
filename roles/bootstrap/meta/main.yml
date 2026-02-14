@@ -1,0 +1,24 @@
+---
+dependencies: []
+
+argument_specs:
+  main:
+    short_description: Bootstrap system configuration
+    description:
+      - Sets system timezone and hostname
+      - Disables SELinux on RedHat-based systems
+      - Installs common dependencies
+    options:
+      bootstrap_timezone:
+        type: str
+        required: false
+        default: "America/New_York"
+        description: System timezone in IANA format
+      bootstrap_install_packages:
+        type: list
+        elements: str
+        required: false
+        default:
+          - unzip
+          - curl
+        description: List of packages to install during bootstrap

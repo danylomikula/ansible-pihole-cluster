@@ -1,0 +1,59 @@
+---
+# Default scenario stub — delegates to the hetzner scenario playbooks.
+# This file exists so that `molecule` does not emit a CRITICAL warning
+# when searching for a default scenario.
+
+shared_state: false
+
+dependency:
+  name: galaxy
+  options:
+    requirements-file: ${MOLECULE_PROJECT_DIRECTORY}/../requirements.yml
+
+driver:
+  name: default
+  options:
+    managed: true
+
+platforms:
+  - name: pihole-master
+    groups:
+      - master
+      - pihole_cluster
+
+  - name: pihole-backup
+    groups:
+      - backup
+      - pihole_cluster
+
+provisioner:
+  name: ansible
+  playbooks:
+    create: ../hetzner/create.yml
+    cleanup: ../hetzner/cleanup.yml
+    converge: ${MOLECULE_PROJECT_DIRECTORY}/extensions/molecule/hetzner/scenarios/default.yml
+    prepare: ../hetzner/prepare.yml
+    verify: ${MOLECULE_PROJECT_DIRECTORY}/extensions/molecule/hetzner/verify/default.yml
+    destroy: ../hetzner/destroy.yml
+  env:
+    ANSIBLE_ROLES_PATH: ${MOLECULE_PROJECT_DIRECTORY}/../roles
+    ANSIBLE_LOCAL_TEMP: /tmp/ansible-local
+    ANSIBLE_REMOTE_TEMP: /tmp/ansible-remote
+    CI_PROJECT_DIR: ${MOLECULE_PROJECT_DIRECTORY}/..
+  config_options:
+    defaults:
+      deprecation_warnings: false
+      result_format: yaml
+      callbacks_enabled: profile_tasks
+
+verifier:
+  name: ansible
+
+scenario:
+  test_sequence:
+    - syntax
+    - create
+    - prepare
+    - converge
+    - verify
+    - destroy

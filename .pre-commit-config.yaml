@@ -1,0 +1,35 @@
+---
+# Pre-commit hooks for Ansible
+# Install: pip install pre-commit
+# Setup: pre-commit install
+
+repos:
+  - repo: https://github.com/ansible/ansible-lint
+    rev: v25.11.1
+    hooks:
+      - id: ansible-lint
+        name: Ansible Lint
+        files: \.(yaml|yml)$
+        additional_dependencies:
+          - ansible-core>=2.14,<2.21
+        exclude: |
+          (?x)^(
+            .*vault\.yml.*|
+            .*/vault\.yml.*
+          )$
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+        args: [--allow-multiple-documents]
+        exclude: |
+          (?x)^(
+            .*vault\.yml.*|
+            .*/vault\.yml.*|
+            .*\.j2$
+          )$
+      - id: mixed-line-ending
+        args: [--fix=lf]

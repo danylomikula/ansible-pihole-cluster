@@ -1,0 +1,116 @@
+---
+# Default scenario: Full Pi-hole cluster test
+# - Master + Backup nodes
+# - Unbound enabled
+# - pihole-updatelists enabled
+# - Nebula Sync enabled
+# - Custom DNS records, CNAME records, conditional forwarding
+
+- name: Load Hetzner state
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: Load Hetzner state file
+      ansible.builtin.include_vars:
+        file: "{{ molecule_ephemeral_directory }}/hcloud_state.yml"
+        name: hcloud_state
+
+    - name: Set cluster facts for all hosts
+      ansible.builtin.set_fact:
+        _hcloud_state: "{{ hcloud_state }}"
+      delegate_to: "{{ item }}"
+      delegate_facts: true
+      loop: "{{ groups['pihole_cluster'] }}"
+
+- name: Converge Pi-hole cluster (default scenario)
+  hosts: pihole_cluster
+  become: true
+  gather_facts: true
+  environment:
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+
+  vars:
+    # Pi-hole password
+    pihole_web_password: "molecule_test_default"
+    # VIP configuration - use private network
+    keepalived_vip_ipv4: "{{ _hcloud_state.keepalived_vip }}/24"
+    # Feature flags
+    unbound_enabled: true
+    pihole_updatelists_enabled: true
+    nebula_sync_enabled: true
+    # NTP sync
+    pihole_ntp_sync_active: true
+    pihole_ntp_sync_server: "pool.ntp.org"
+    # Custom DNS records
+    local_dns_records: |
+      10.0.1.100 testhost.homelab.local
+      10.0.1.101 testhost2.homelab.local
+    # Custom CNAME records
+    local_cname_records: |
+      testhost.homelab.local,testalias.homelab.local
+    # Conditional forwarding
+    pihole_rev_servers:
+      - cidr: "10.0.1.0/24"
+        target: "10.0.1.1"
+        domain: "homelab.local"
+    # Keepalived tuning for tests
+    keepalived_check_interval: 2
+    keepalived_check_timeout: 2
+    keepalived_check_fall: 3
+    keepalived_check_rise: 2
+
+  pre_tasks:
+    - name: Set host-specific variables
+      ansible.builtin.set_fact:
+        ansible_host: "{{ hostvars[inventory_hostname]['ansible_host'] }}"
+        priority: "{{ (_hcloud_state.servers | selectattr('instance_name', 'equalto', inventory_hostname) | first).priority }}"
+        private_ip: "{{ (_hcloud_state.servers | selectattr('instance_name', 'equalto', inventory_hostname) | first).private_ip }}"
+
+    - name: Find private network interface
+      ansible.builtin.shell:
+        cmd: |
+          set -o pipefail
+          ip -4 -o addr show | grep '{{ private_ip }}/' | awk '{print $2}'
+        executable: /bin/bash
+      register: _private_net_result
+      changed_when: false
+      retries: 6
+      delay: 10
+      until: _private_net_result.stdout | trim | length > 0
+
+    - name: Set keepalived interface and unicast IP for private network
+      ansible.builtin.set_fact:
+        keepalived_interface: "{{ _private_net_result.stdout | trim }}"
+        keepalived_unicast_src_ip: "{{ private_ip }}"
+
+    - name: Update apt cache (Debian)
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+      when: ansible_os_family == "Debian"
+
+  roles:
+    - role: bootstrap
+      vars:
+        bootstrap_timezone: "UTC"
+
+    - role: docker
+      when: nebula_sync_enabled | default(false)
+
+    - role: keepalived
+
+    - role: unbound
+      when: unbound_enabled | default(true)
+
+    - role: pihole
+
+    - role: pihole_updatelists
+      when: pihole_updatelists_enabled | default(true)
+
+    - role: nebula_sync
+      when:
+        - nebula_sync_enabled | default(false)
+        - inventory_hostname in groups['master']
+
+    - role: status

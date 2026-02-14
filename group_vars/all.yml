@@ -1,0 +1,152 @@
+---
+# Example group_vars/all.yml for danylomikula.ansible_pihole_cluster
+# Customize these variables for your environment
+
+## General Settings
+ansible_user: ansible
+pihole_reboot_after_run: true           # Reboot cluster in order after Pi-hole install (master -> backup)
+
+# =============================================================================
+# GLOBAL IPv6 SETTINGS
+# =============================================================================
+ipv6_enabled: false                     # Enable IPv6 support (keepalived, pihole)
+ipv6_vip: "fe80::53/64"                 # IPv6 virtual IP address (CIDR notation)
+
+# =============================================================================
+# BOOTSTRAP ROLE
+# =============================================================================
+bootstrap_timezone: "America/New_York"  # https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+
+# =============================================================================
+# KEEPALIVED ROLE (HA Failover)
+# =============================================================================
+keepalived_vip_ipv4: "10.20.0.53/16"    # Floating (virtual) IPv4 for failover
+keepalived_virtual_router_id: 1         # VRRP router ID (change if multiple clusters on same network)
+keepalived_advert_int: 1                # Advertisement interval in seconds
+keepalived_preempt_delay: 900           # Preemption delay in seconds
+keepalived_check_interval: 2            # Health check interval (seconds)
+keepalived_check_timeout: 2             # Health check script timeout (seconds)
+keepalived_check_fall: 3                # Failures before failover (3 × 2s = 6s)
+keepalived_check_rise: 2                # Successes before recovery (2 × 2s = 4s)
+
+# =============================================================================
+# FEATURE TOGGLES
+# =============================================================================
+unbound_enabled: true                   # Enable Unbound recursive DNS resolver
+nebula_sync_enabled: true               # Enable Pi-hole settings synchronization
+pihole_updatelists_enabled: true        # Enable automated blocklist management
+updates_enabled: true                   # Enable system updates
+
+# =============================================================================
+# UNBOUND ROLE (Recursive DNS)
+# =============================================================================
+# https://docs.pi-hole.net/guides/dns/unbound/
+unbound_verbosity: 0                    # Logging verbosity (0-5)
+unbound_num_threads: 1                  # Number of threads
+unbound_edns_buffer_size: 1232
+unbound_so_rcvbuf: "1m"
+unbound_private_domain: "{{ pihole_local_domain | default('homelab.local') }}"
+
+# =============================================================================
+# NEBULA SYNC ROLE (Pi-hole Synchronization)
+# =============================================================================
+# https://github.com/lovelaze/nebula-sync
+nebula_sync_version: "v0.11.1"
+nebula_sync_cron: "*/30 * * * *"        # Sync schedule (cron format)
+nebula_sync_client_skip_tls_verification: true
+nebula_sync_run_gravity: true           # Run gravity update after sync
+nebula_sync_full_sync: true             # Full sync mode (all settings synced)
+nebula_sync_additional_settings: {}     # Additional settings for partial sync
+
+# =============================================================================
+# PI-HOLE ROLE
+# =============================================================================
+pihole_version: "6.3"                   # https://github.com/pi-hole/pi-hole/releases
+pihole_manage_config: true              # Set to false to preserve settings changed via web UI
+pihole_web_password: "CHANGE_ME"        # Web interface password (use ansible-vault!)
+pihole_local_domain: "homelab.local"
+# Web Interface
+pihole_web_domain: "{{ ansible_hostname }}.{{ pihole_local_domain }}"
+pihole_web_port: "80o,443os,[::]:80o,[::]:443os"
+pihole_web_session_timeout: 1800
+pihole_web_boxed_layout: true
+pihole_web_theme: "default-auto"        # default-auto, default-light, default-dark, lcars, etc.
+pihole_web_acl: ""                      # Access control list (empty = allow all)
+pihole_web_tls_cert: ""                 # Path to TLS certificate (optional)
+pihole_web_paths_webhome: ""            # Custom web home path (optional)
+pihole_web_paths_prefix: ""             # URL prefix, e.g., "/admin" (optional)
+
+# DNS Settings
+pihole_interface: ""                    # Leave empty for auto-detection
+pihole_socket_listening: "ALL"          # LOCAL, SINGLE, BIND, ALL, NONE
+pihole_query_logging: true
+pihole_local_domain_local: true         # Keep queries local to this domain
+pihole_upstream_dns:                    # Ignored when unbound_enabled is true
+  - "1.1.1.1"
+  - "1.0.0.1"
+
+# Privacy & Security
+pihole_privacy_level: "0"               # 0=full logging, 1=hide domains, 2=hide clients, 3=anonymous
+pihole_cname_deep_inspect: true
+pihole_block_esni: true
+pihole_edns0_ecs: true
+pihole_block_mozilla_canary: true       # Block Firefox DoH
+pihole_block_icloud_pr: true            # Block Apple iCloud Private Relay
+
+# DNS Behavior
+pihole_ignore_localhost: false
+pihole_domain_needed: false
+pihole_bogus_priv: true
+pihole_dnssec: false
+pihole_show_dnssec: true
+pihole_ptr: "HOSTNAMEFQDN"              # NONE, HOSTNAME, HOSTNAMEFQDN, PI.HOLE
+
+# DNS Cache & Database
+pihole_dns_cache_size: 10000
+pihole_max_db_days: 91
+pihole_db_interval: 60
+
+# Name Resolution
+pihole_resolve_ipv4: true
+pihole_resolve_ipv6: true
+pihole_network_names: true
+pihole_refresh_names: "IPV4_ONLY"       # IPV4_ONLY, ALL, UNKNOWN, NONE
+
+# Rate Limiting
+pihole_rate_limit_count: 1000
+pihole_rate_limit_interval: 60
+pihole_reply_when_busy: "DROP"          # BLOCK, ALLOW, REFUSE, DROP
+
+# NTP Sync Settings (external NTP server)
+pihole_ntp_sync_active: true
+pihole_ntp_sync_server: "time.cloudflare.com"
+pihole_ntp_sync_interval: 3600
+pihole_ntp_sync_count: 8
+
+# Conditional Forwarding (optional)
+# pihole_rev_servers:
+#   - cidr: "10.20.0.0/16"
+#     target: "10.20.0.1"
+#     domain: "homelab.local"
+
+# Custom DNS Records (optional)
+# local_dns_records: |
+#   10.20.0.88 node.homelab.local
+#   10.20.0.96 nas.homelab.local
+
+# Custom CNAME Records (optional)
+# local_cname_records: |
+#   node.homelab.local,webserver.homelab.local
+
+# =============================================================================
+# PI-HOLE UPDATELISTS ROLE
+# =============================================================================
+# https://github.com/jacklul/pihole-updatelists
+pihole_updatelists_blocklists_url: "https://v.firebog.net/hosts/lists.php?type=nocross"
+pihole_updatelists_blacklist_url: ""
+pihole_updatelists_whitelist_url: "https://raw.githubusercontent.com/anudeepND/whitelist/master/domains/whitelist.txt"
+pihole_updatelists_allowlists_url: ""
+pihole_updatelists_regex_blacklist_url: "https://raw.githubusercontent.com/mmotti/pihole-regex/master/regex.list"
+pihole_updatelists_regex_whitelist_url: "https://raw.githubusercontent.com/mmotti/pihole-regex/master/whitelist.list"
+pihole_updatelists_interval: "24h"      # Update frequency (e.g., 12h, 24h, weekly)
+pihole_updatelists_run_now: true        # Run immediately after deployment

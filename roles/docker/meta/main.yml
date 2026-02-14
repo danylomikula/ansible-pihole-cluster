@@ -1,0 +1,28 @@
+---
+dependencies: []
+
+argument_specs:
+  main:
+    short_description: Install and configure Docker
+    description:
+      - Installs Docker on the master node for running nebula-sync container
+      - Automatically enabled when nebula_sync_enabled is true
+      - Uses official Docker convenience script on Debian
+      - Uses Docker CE repository on RedHat
+    options:
+      nebula_sync_enabled:
+        type: bool
+        required: false
+        default: true
+        description: Enable Docker installation (required for nebula-sync)
+      docker_install_packages:
+        type: list
+        elements: str
+        required: false
+        default:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        description: Docker packages to install on RedHat-based systems
