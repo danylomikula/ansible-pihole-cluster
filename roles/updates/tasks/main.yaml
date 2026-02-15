@@ -2,7 +2,7 @@
 - name: Update packages on Debian-based systems
   when:
     - updates_enabled | default(true)
-    - ansible_os_family == "Debian"
+    - ansible_facts['os_family'] == "Debian"
   tags:
     - updates
   block:
@@ -29,7 +29,7 @@
 - name: Update packages on RedHat-based systems
   when:
     - updates_enabled | default(true)
-    - ansible_os_family == "RedHat"
+    - ansible_facts['os_family'] == "RedHat"
   tags:
     - updates
   block:

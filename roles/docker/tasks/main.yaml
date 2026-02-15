@@ -16,7 +16,7 @@
     - name: Install Docker on Debian-based systems
       when:
         - _docker_check.rc != 0
-        - ansible_os_family == "Debian"
+        - ansible_facts['os_family'] == "Debian"
       block:
         - name: Download Docker convenience script
           ansible.builtin.get_url:
@@ -44,7 +44,7 @@
     - name: Install Docker on RedHat-based systems
       when:
         - _docker_check.rc != 0
-        - ansible_os_family == "RedHat"
+        - ansible_facts['os_family'] == "RedHat"
       block:
         - name: Add Docker CE repository
           ansible.builtin.yum_repository:

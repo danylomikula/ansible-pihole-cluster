@@ -28,7 +28,7 @@
   become: true
   gather_facts: true
   environment:
-    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+    PATH: "/usr/local/bin:{{ ansible_facts['env']['PATH'] }}"
 
   vars:
     # Pi-hole password
@@ -88,7 +88,7 @@
       ansible.builtin.apt:
         update_cache: true
         cache_valid_time: 3600
-      when: ansible_os_family == "Debian"
+      when: ansible_facts['os_family'] == "Debian"
 
   roles:
     - role: bootstrap

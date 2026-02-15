@@ -6,11 +6,11 @@
 keepalived_vip_ipv4: "10.20.0.53/16"
 
 # Network interface for VRRP
-# Leave empty to use ansible_default_ipv4.interface
+# Leave empty to auto-detect from default IPv4 interface
 keepalived_interface: ""
 
 # Unicast source IP for VRRP advertisements
-# Leave empty to use ansible_default_ipv4.address
+# Leave empty to auto-detect from default IPv4 address
 keepalived_unicast_src_ip: ""
 
 # VRRP configuration

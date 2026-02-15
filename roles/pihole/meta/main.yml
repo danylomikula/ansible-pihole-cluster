@@ -37,7 +37,7 @@ argument_specs:
       pihole_web_domain:
         type: str
         required: false
-        default: "{{ ansible_hostname }}.{{ pihole_local_domain }}"
+        default: "{{ ansible_facts['hostname'] }}.{{ pihole_local_domain }}"
         description: Web interface domain
       pihole_web_port:
         type: str

@@ -7,7 +7,7 @@
     - timezone
 
 - name: Install SELinux Python bindings for RedHat
-  when: ansible_os_family == "RedHat"
+  when: ansible_facts['os_family'] == "RedHat"
   ansible.builtin.package:
     name:
       - python3-libselinux
@@ -20,7 +20,7 @@
 
 - name: Disable SELinux
   when:
-    - ansible_os_family == "RedHat"
+    - ansible_facts['os_family'] == "RedHat"
   ansible.posix.selinux:
     state: disabled
   tags:
@@ -39,7 +39,7 @@
   ansible.builtin.package:
     name: dnsutils
     state: present
-  when: ansible_os_family == "Debian"
+  when: ansible_facts['os_family'] == "Debian"
   tags:
     - bootstrap
     - packages
@@ -48,7 +48,7 @@
   ansible.builtin.package:
     name: bind-utils
     state: present
-  when: ansible_os_family == "RedHat"
+  when: ansible_facts['os_family'] == "RedHat"
   tags:
     - bootstrap
     - packages
