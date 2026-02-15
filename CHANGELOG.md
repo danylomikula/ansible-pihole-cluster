@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.0.1](https://github.com/danylomikula/ansible-pihole-cluster/compare/v3.0.0...v3.0.1) (2026-02-15)
+
+
+### Bug Fixes
+
+* resolve ansible_facts deprecation warnings and add galaxy role metadata ([#23](https://github.com/danylomikula/ansible-pihole-cluster/issues/23)) ([432b7f5](https://github.com/danylomikula/ansible-pihole-cluster/commit/432b7f59c70ed37af8683d6891f2cda4ef0107b2))
+
 ## [3.0.0](https://github.com/danylomikula/ansible-pihole-cluster/compare/v3.0.0...v3.0.0) (2026-02-14)
 
 
