@@ -1,6 +1,15 @@
 ---
 dependencies: []
 
+galaxy_info:
+  author: danylomikula
+  description: Install and configure Docker for nebula-sync container
+  license: Apache-2.0
+  min_ansible_version: "2.17"
+  galaxy_tags:
+    - pihole
+    - docker
+
 argument_specs:
   main:
     short_description: Install and configure Docker

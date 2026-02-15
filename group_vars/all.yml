@@ -66,7 +66,7 @@ pihole_manage_config: true              # Set to false to preserve settings chan
 pihole_web_password: "CHANGE_ME"        # Web interface password (use ansible-vault!)
 pihole_local_domain: "homelab.local"
 # Web Interface
-pihole_web_domain: "{{ ansible_hostname }}.{{ pihole_local_domain }}"
+pihole_web_domain: "{{ ansible_facts['hostname'] }}.{{ pihole_local_domain }}"
 pihole_web_port: "80o,443os,[::]:80o,[::]:443os"
 pihole_web_session_timeout: 1800
 pihole_web_boxed_layout: true

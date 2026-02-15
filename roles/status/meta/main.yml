@@ -1,6 +1,15 @@
 ---
 dependencies: []
 
+galaxy_info:
+  author: danylomikula
+  description: Verify Pi-hole cluster service status
+  license: Apache-2.0
+  min_ansible_version: "2.17"
+  galaxy_tags:
+    - pihole
+    - cluster
+
 argument_specs:
   main:
     short_description: Verify Pi-hole cluster service status

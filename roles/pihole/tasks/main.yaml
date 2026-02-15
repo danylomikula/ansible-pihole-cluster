@@ -12,17 +12,17 @@
 
 - name: Set facts for IPv4 addresses
   ansible.builtin.set_fact:
-    pihole_host_local_ipv4: "{{ ansible_default_ipv4.address }}"
+    pihole_host_local_ipv4: "{{ ansible_facts['default_ipv4']['address'] }}"
   tags:
     - pihole
     - facts
 
 - name: Set facts for IPv6 addresses
   ansible.builtin.set_fact:
-    pihole_host_local_ipv6: "{{ ansible_default_ipv6.address | default('::1') }}"
+    pihole_host_local_ipv6: "{{ ansible_facts['default_ipv6']['address'] | default('::1') }}"
   when:
     - ipv6_enabled | default(false)
-    - ansible_default_ipv6.address is defined
+    - ansible_facts['default_ipv6']['address'] is defined
   tags:
     - pihole
     - facts
@@ -178,7 +178,7 @@
 
     - name: Run Pi-hole installer
       ansible.builtin.shell: |
-        {% if ansible_os_family == "RedHat" %}
+        {% if ansible_facts['os_family'] == "RedHat" %}
         export PIHOLE_SKIP_OS_CHECK=true
         {% endif %}
         export TERM=xterm
@@ -250,7 +250,7 @@
 # ============================================
 - name: Add user to pihole group
   ansible.builtin.user:
-    name: "{{ ansible_user }}"
+    name: "{{ ansible_facts['user_id'] }}"
     groups: pihole
     append: true
   failed_when: false

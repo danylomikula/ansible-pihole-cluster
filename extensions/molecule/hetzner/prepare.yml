@@ -42,7 +42,7 @@
       delay: 10
       register: _apt_install
       until: _apt_install is success
-      when: ansible_os_family == "Debian"
+      when: ansible_facts['os_family'] == "Debian"
 
     - name: Install required packages for testing (RedHat)
       ansible.builtin.dnf:
@@ -55,11 +55,11 @@
       delay: 10
       register: _dnf_install
       until: _dnf_install is success
-      when: ansible_os_family == "RedHat"
+      when: ansible_facts['os_family'] == "RedHat"
 
     - name: Display host information
       ansible.builtin.debug:
         msg:
           - "Host: {{ inventory_hostname }}"
-          - "OS: {{ ansible_distribution }} {{ ansible_distribution_version }}"
-          - "IP: {{ ansible_default_ipv4.address | default('N/A') }}"
+          - "OS: {{ ansible_facts['distribution'] }} {{ ansible_facts['distribution_version'] }}"
+          - "IP: {{ ansible_facts['default_ipv4']['address'] | default('N/A') }}"

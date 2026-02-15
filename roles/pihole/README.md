@@ -91,7 +91,7 @@ Installs and configures Pi-hole DNS sinkhole.
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `pihole_web_domain` | `{{ ansible_hostname }}.{{ pihole_local_domain }}` | Web domain |
+| `pihole_web_domain` | `{{ ansible_facts['hostname'] }}.{{ pihole_local_domain }}` | Web domain |
 | `pihole_web_port` | `80o,443os,[::]:80o,[::]:443os` | Web port configuration |
 | `pihole_web_session_timeout` | `1800` | Session timeout (seconds) |
 | `pihole_web_boxed_layout` | `true` | Boxed layout in web UI |

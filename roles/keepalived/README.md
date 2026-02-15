@@ -13,8 +13,8 @@ Installs and configures keepalived for Pi-hole high availability using VRRP.
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `keepalived_vip_ipv4` | `10.20.0.53/16` | Virtual IPv4 (CIDR) |
-| `keepalived_interface` | `""` (auto) | VRRP interface (empty = `ansible_default_ipv4.interface`) |
-| `keepalived_unicast_src_ip` | `""` (auto) | Unicast source IP (empty = `ansible_default_ipv4.address`) |
+| `keepalived_interface` | `""` (auto) | VRRP interface (auto-detected from default IPv4 interface) |
+| `keepalived_unicast_src_ip` | `""` (auto) | Unicast source IP (auto-detected from default IPv4 address) |
 | `keepalived_virtual_router_id` | `1` | VRRP router ID (1-255) |
 | `keepalived_advert_int` | `1` | Advertisement interval (seconds) |
 | `keepalived_preempt_delay` | `900` | Preemption delay (seconds) |

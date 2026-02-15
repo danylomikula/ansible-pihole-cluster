@@ -21,7 +21,7 @@ pihole_reboot_timeout: 900
 # pihole_web_password: ""
 
 # Web interface settings
-pihole_web_domain: "{{ ansible_hostname }}.{{ pihole_local_domain }}"
+pihole_web_domain: "{{ ansible_facts['hostname'] }}.{{ pihole_local_domain }}"
 pihole_web_port: "80o,443os,[::]:80o,[::]:443os"
 pihole_web_session_timeout: 1800
 pihole_web_boxed_layout: true

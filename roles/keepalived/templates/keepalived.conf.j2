@@ -9,13 +9,13 @@
 {% if keepalived_interface | default('') | length > 0 %}
 {% set _interface = keepalived_interface %}
 {% else %}
-{% set _interface = ansible_default_ipv4.interface %}
+{% set _interface = ansible_facts['default_ipv4']['interface'] %}
 {% endif %}
 {# Unicast source IP - configurable or fall back to default #}
 {% if keepalived_unicast_src_ip | default('') | length > 0 %}
 {% set _unicast_src_ip = keepalived_unicast_src_ip %}
 {% else %}
-{% set _unicast_src_ip = ansible_default_ipv4.address %}
+{% set _unicast_src_ip = ansible_facts['default_ipv4']['address'] %}
 {% endif %}
 {# Build unicast peer list (all cluster hosts except current) #}
 {% set _peers = [] %}
@@ -24,14 +24,14 @@
 {# Use keepalived_unicast_src_ip from peer if set, otherwise ansible_host or default IP #}
 {% set _peer_ip = hostvars[host].keepalived_unicast_src_ip | default('') %}
 {% if _peer_ip | length == 0 %}
-{% set _peer_ip = hostvars[host].ansible_host | default(hostvars[host].ansible_default_ipv4.address) %}
+{% set _peer_ip = hostvars[host].ansible_host | default(hostvars[host].ansible_facts['default_ipv4']['address']) %}
 {% endif %}
 {% set _ = _peers.append(_peer_ip) %}
 {% endif %}
 {% endfor %}
 
 global_defs {
-    script_user {{ ansible_user }}
+    script_user {{ ansible_facts['user_id'] }}
     enable_script_security
     max_auto_priority
     vrrp_no_swap
@@ -80,7 +80,7 @@ vrrp_instance PIHOLE-IPv4 {
 }
 
 vrrp_instance PIHOLE-IPv6 {
-    interface {{ ansible_default_ipv6.interface | default(_interface) }}
+    interface {{ ansible_facts['default_ipv6']['interface'] | default(_interface) }}
     virtual_router_id {{ _router_id + 1 }}
     priority {{ priority }}
     advert_int {{ _advert_int }}
