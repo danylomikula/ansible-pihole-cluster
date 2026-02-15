@@ -14,7 +14,7 @@ Automated blocklist management for Pi-hole using pihole-updatelists.
 |----------|---------|-------------|
 | `pihole_updatelists_enabled` | `true` | Enable updatelists |
 | `pihole_updatelists_blocklists_url` | Firebog | URL containing list of blocklist URLs |
-| `pihole_updatelists_blacklist_url` | `""` | URL for exact domain blacklist |
+| `pihole_updatelists_blacklist_url` | StevenBlack | URL for exact domain blacklist |
 | `pihole_updatelists_whitelist_url` | anudeepND | URL for exact domain whitelist |
 | `pihole_updatelists_allowlists_url` | `""` | URL containing list of allowlist URLs |
 | `pihole_updatelists_regex_blacklist_url` | mmotti | URL for regex blacklist rules |
