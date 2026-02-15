@@ -1,6 +1,6 @@
 namespace: danylomikula
 name: ansible_pihole_cluster
-version: 3.0.0
+version: 3.0.1
 readme: README.md
 authors:
   - Danylo Mikula <dan@mikula.dev>
