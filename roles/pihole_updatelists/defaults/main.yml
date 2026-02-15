@@ -10,7 +10,7 @@ pihole_updatelists_enabled: true
 pihole_updatelists_blocklists_url: "https://v.firebog.net/hosts/lists.php?type=nocross"
 
 # Exact domains to blacklist (handcrafted lists only)
-pihole_updatelists_blacklist_url: ""
+pihole_updatelists_blacklist_url: "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts"
 
 # Exact domains to whitelist
 # https://github.com/anudeepND/whitelist

@@ -27,24 +27,20 @@
     - pihole
     - facts
 
-- name: Check if Pi-hole directories exist
-  ansible.builtin.stat:
-    path: "{{ item }}"
-  loop:
-    - /etc/pihole
-    - /etc/dnsmasq.d
-  register: _pihole_dirs
+- name: Create Pi-hole directory
+  ansible.builtin.file:
+    path: /etc/pihole
+    state: directory
+    mode: "0775"
   tags:
     - pihole
     - directories
 
-- name: Create Pi-hole directories
+- name: Create dnsmasq directory
   ansible.builtin.file:
-    path: "{{ item.item }}"
+    path: /etc/dnsmasq.d
     state: directory
     mode: "0755"
-  loop: "{{ _pihole_dirs.results }}"
-  when: not item.stat.exists
   tags:
     - pihole
     - directories
