@@ -1,6 +1,15 @@
 ---
 dependencies: []
 
+galaxy_info:
+  author: danylomikula
+  description: Update system packages with optional reboot
+  license: Apache-2.0
+  min_ansible_version: "2.17"
+  galaxy_tags:
+    - pihole
+    - system
+
 argument_specs:
   main:
     short_description: Update system packages

@@ -1,6 +1,16 @@
 ---
 dependencies: []
 
+galaxy_info:
+  author: danylomikula
+  description: Install and configure unbound recursive DNS resolver
+  license: Apache-2.0
+  min_ansible_version: "2.17"
+  galaxy_tags:
+    - pihole
+    - dns
+    - unbound
+
 argument_specs:
   main:
     short_description: Install and configure unbound recursive DNS
