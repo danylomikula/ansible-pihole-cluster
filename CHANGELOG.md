@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.0.2](https://github.com/danylomikula/ansible-pihole-cluster/compare/v3.0.1...v3.0.2) (2026-02-15)
+
+
+### Bug Fixes
+
+* set /etc/pihole directory mode to 0775 and add default blacklist URL ([#25](https://github.com/danylomikula/ansible-pihole-cluster/issues/25)) ([0c45ee2](https://github.com/danylomikula/ansible-pihole-cluster/commit/0c45ee21507ae7426797199f2c4ae0af19dfd6ad))
+
 ## [3.0.1](https://github.com/danylomikula/ansible-pihole-cluster/compare/v3.0.0...v3.0.1) (2026-02-15)
 
 
