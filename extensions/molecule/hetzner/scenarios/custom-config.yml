@@ -27,7 +27,7 @@
   become: true
   gather_facts: true
   environment:
-    PATH: "/usr/local/bin:{{ ansible_facts['env']['PATH'] }}"
+    PATH: "/usr/local/bin:{{ lookup('env', 'PATH') }}"
 
   vars:
     # Pi-hole password
