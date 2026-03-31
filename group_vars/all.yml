@@ -61,7 +61,7 @@ nebula_sync_additional_settings: {}     # Additional settings for partial sync
 # =============================================================================
 # PI-HOLE ROLE
 # =============================================================================
-pihole_version: "6.3"                   # https://github.com/pi-hole/pi-hole/releases
+pihole_version: "6.4"                   # https://github.com/pi-hole/pi-hole/releases
 pihole_manage_config: true              # Set to false to preserve settings changed via web UI
 pihole_web_password: "CHANGE_ME"        # Web interface password (use ansible-vault!)
 pihole_local_domain: "homelab.local"
@@ -143,7 +143,7 @@ pihole_ntp_sync_count: 8
 # =============================================================================
 # https://github.com/jacklul/pihole-updatelists
 pihole_updatelists_blocklists_url: "https://v.firebog.net/hosts/lists.php?type=nocross"
-pihole_updatelists_blacklist_url: "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts"
+pihole_updatelists_blacklist_url: ""
 pihole_updatelists_whitelist_url: "https://raw.githubusercontent.com/anudeepND/whitelist/master/domains/whitelist.txt"
 pihole_updatelists_allowlists_url: ""
 pihole_updatelists_regex_blacklist_url: "https://raw.githubusercontent.com/mmotti/pihole-regex/master/regex.list"
