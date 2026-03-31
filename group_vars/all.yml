@@ -61,7 +61,7 @@ nebula_sync_additional_settings: {}     # Additional settings for partial sync
 # =============================================================================
 # PI-HOLE ROLE
 # =============================================================================
-pihole_version: "6.3"                   # https://github.com/pi-hole/pi-hole/releases
+pihole_version: "6.4"                   # https://github.com/pi-hole/pi-hole/releases
 pihole_manage_config: true              # Set to false to preserve settings changed via web UI
 pihole_web_password: "CHANGE_ME"        # Web interface password (use ansible-vault!)
 pihole_local_domain: "homelab.local"
