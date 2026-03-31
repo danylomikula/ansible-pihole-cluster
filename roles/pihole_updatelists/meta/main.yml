@@ -32,8 +32,8 @@ argument_specs:
       pihole_updatelists_blacklist_url:
         type: str
         required: false
-        default: "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts"
-        description: URL for exact domain blacklist
+        default: ""
+        description: URL for handcrafted exact-domain blacklist
       pihole_updatelists_whitelist_url:
         type: str
         required: false
