@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.0.3](https://github.com/danylomikula/ansible-pihole-cluster/compare/v3.0.2...v3.0.3) (2026-03-31)
+
+
+### Bug Fixes
+
+* remove invalid pihole-updatelists blacklist default ([#27](https://github.com/danylomikula/ansible-pihole-cluster/issues/27)) ([9d02854](https://github.com/danylomikula/ansible-pihole-cluster/commit/9d02854c8882cecf40a01034fb8eb44b638c5f3c))
+
 ## [3.0.2](https://github.com/danylomikula/ansible-pihole-cluster/compare/v3.0.1...v3.0.2) (2026-02-15)
 
 
