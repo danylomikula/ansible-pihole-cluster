@@ -104,6 +104,20 @@ Create **`site.yml`** - the main playbook with all configuration:
 ```
 
 > See the full list of available variables in the [group_vars/all.yml](group_vars/all.yml) example.
+>
+> By default, the `unbound` role uses `recursive` mode. If you want to forward DNS queries to Quad9 over TLS instead, add this to your `vars`:
+> ```yaml
+> unbound_mode: forward
+> unbound_forward_zone: |
+>   name: "."
+>   forward-tls-upstream: yes
+>   forward-addr: 9.9.9.9@853#dns.quad9.net
+>   forward-addr: 149.112.112.112@853#dns.quad9.net
+>   forward-addr: 2620:fe::fe@853#dns.quad9.net
+>   forward-addr: 2620:fe::9@853#dns.quad9.net
+> ```
+>
+> See [roles/unbound/README.md](roles/unbound/README.md) for more `forward-zone` examples and mode details.
 
 ### 3. Deploy Cluster
 
