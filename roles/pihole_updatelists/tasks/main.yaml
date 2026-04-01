@@ -1,6 +1,6 @@
 ---
 - name: Pi-hole updatelists role
-  when: pihole_updatelists_enabled | default(true)
+  when: pihole_updatelists_enabled
   tags:
     - pihole_updatelists
   block:
@@ -95,13 +95,13 @@
         - _pihole_updatelists_result.rc != 0
         - "'Another process is already running' not in _pihole_updatelists_result.stdout"
       register: _pihole_updatelists_result
-      when: pihole_updatelists_run_now | default(true)
+      when: pihole_updatelists_run_now
       tags:
         - pihole_updatelists
 
     - name: Update Pi-hole Gravity
       ansible.builtin.command: /usr/local/bin/pihole updateGravity
       changed_when: false
-      when: pihole_updatelists_run_now | default(true)
+      when: pihole_updatelists_run_now
       tags:
         - pihole_updatelists
