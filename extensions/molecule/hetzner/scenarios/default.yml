@@ -91,26 +91,28 @@
       when: ansible_facts['os_family'] == "Debian"
 
   roles:
+    - role: updates
+
     - role: bootstrap
       vars:
         bootstrap_timezone: "UTC"
 
     - role: docker
-      when: nebula_sync_enabled | default(false)
+      when: nebula_sync_enabled
 
     - role: keepalived
 
     - role: unbound
-      when: unbound_enabled | default(true)
+      when: unbound_enabled
 
     - role: pihole
 
     - role: pihole_updatelists
-      when: pihole_updatelists_enabled | default(true)
+      when: pihole_updatelists_enabled
 
     - role: nebula_sync
       when:
-        - nebula_sync_enabled | default(false)
+        - nebula_sync_enabled
         - inventory_hostname in groups['master']
 
     - role: status

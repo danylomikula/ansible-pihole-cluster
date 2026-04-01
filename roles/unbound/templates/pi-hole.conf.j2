@@ -63,6 +63,9 @@ server:
 
     # Ensure kernel buffer is large enough to not lose messages in traffic spikes
     so-rcvbuf: {{ unbound_so_rcvbuf }}
+{% if unbound_mode == 'forward' %}
+    tls-system-cert: yes
+{% endif %}
 
     # Ensure privacy of local IP ranges
     private-address: 192.168.0.0/16
@@ -82,3 +85,8 @@ server:
     # Allow the domain (and its subdomains) to contain private addresses.
     # local-data statements are allowed to contain private addresses too.
     private-domain: "{{ unbound_private_domain }}"
+{% if unbound_mode == 'forward' and unbound_forward_zone | trim %}
+
+forward-zone:
+{{ unbound_forward_zone | trim | indent(4, true) }}
+{% endif %}

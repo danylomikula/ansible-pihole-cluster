@@ -79,6 +79,8 @@
       when: ansible_facts['os_family'] == "Debian"
 
   roles:
+    - role: updates
+
     - role: bootstrap
       vars:
         bootstrap_timezone: "UTC"

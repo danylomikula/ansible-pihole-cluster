@@ -38,13 +38,24 @@ pihole_updatelists_enabled: true        # Enable automated blocklist management
 updates_enabled: true                   # Enable system updates
 
 # =============================================================================
-# UNBOUND ROLE (Recursive DNS)
+# UNBOUND ROLE (DNS Resolver)
 # =============================================================================
 # https://docs.pi-hole.net/guides/dns/unbound/
 unbound_verbosity: 0                    # Logging verbosity (0-5)
 unbound_num_threads: 1                  # Number of threads
 unbound_edns_buffer_size: 1232
 unbound_so_rcvbuf: "1m"
+unbound_mode: "recursive"               # recursive | forward
+unbound_forward_zone: ""                # Used only when unbound_mode == "forward"
+# Example Quad9 DoT forward-zone:
+# unbound_mode: "forward"
+# unbound_forward_zone: |
+#   name: "."
+#   forward-tls-upstream: yes
+#   forward-addr: 9.9.9.9@853#dns.quad9.net
+#   forward-addr: 149.112.112.112@853#dns.quad9.net
+#   forward-addr: 2620:fe::fe@853#dns.quad9.net
+#   forward-addr: 2620:fe::9@853#dns.quad9.net
 unbound_private_domain: "{{ pihole_local_domain | default('homelab.local') }}"
 
 # =============================================================================

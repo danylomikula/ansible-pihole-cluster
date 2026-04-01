@@ -217,7 +217,7 @@
     dest: /etc/pihole/pihole.toml
     mode: "0644"
   when:
-    - pihole_manage_config | default(true)
+    - pihole_manage_config
     - _pihole_custom_config.stat.exists
   notify: Restart pihole-FTL service
   tags:
@@ -233,7 +233,7 @@
     dest: /etc/pihole/pihole.toml
     mode: "0644"
   when:
-    - pihole_manage_config | default(true)
+    - pihole_manage_config
     - not _pihole_custom_config.stat.exists
   notify: Restart pihole-FTL service
   tags:
@@ -306,7 +306,7 @@
     _pihole_reboot_after_run: true
   changed_when: (_pihole_install_result is defined and _pihole_install_result.changed) | default(false)
   run_once: true
-  when: pihole_reboot_after_run | default(true)
+  when: pihole_reboot_after_run
   notify: Reboot cluster in order
   tags:
     - pihole

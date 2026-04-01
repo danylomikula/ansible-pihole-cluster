@@ -37,7 +37,7 @@ None
 - hosts: pihole_cluster
   roles:
     - role: danylomikula.ansible_pihole_cluster.pihole_updatelists
-      when: pihole_updatelists_enabled | default(true)
+      when: pihole_updatelists_enabled
 ```
 
 ## License

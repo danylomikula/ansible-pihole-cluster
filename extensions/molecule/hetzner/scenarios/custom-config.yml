@@ -1,6 +1,6 @@
 ---
-# Custom-config scenario: Test custom Pi-hole configuration values
-# - Custom DNS upstream servers
+# Custom-config scenario: Test non-default Pi-hole and Unbound configuration
+# - Unbound forward mode with Quad9 DNS-over-TLS
 # - Custom cache size
 # - Custom privacy level
 # - Custom local domain
@@ -34,14 +34,19 @@
     pihole_web_password: "molecule_test_custom"
     # VIP configuration
     keepalived_vip_ipv4: "{{ _hcloud_state.keepalived_vip }}/24"
-    # Disable unbound to test external DNS
-    unbound_enabled: false
+    # Enable Unbound in forward mode with Quad9 DNS-over-TLS
+    unbound_enabled: true
+    unbound_mode: forward
+    unbound_forward_zone: |
+      name: "."
+      forward-tls-upstream: yes
+      forward-addr: 9.9.9.9@853#dns.quad9.net
+      forward-addr: 149.112.112.112@853#dns.quad9.net
+      forward-addr: 2620:fe::fe@853#dns.quad9.net
+      forward-addr: 2620:fe::9@853#dns.quad9.net
     pihole_updatelists_enabled: false
     nebula_sync_enabled: false
     # Custom Pi-hole configuration
-    pihole_upstream_dns:
-      - "1.1.1.1"
-      - "8.8.8.8"
     pihole_dns_cache_size: 5000
     pihole_privacy_level: 2
     pihole_ntp_sync_server: "time.google.com"
@@ -83,6 +88,8 @@
       when: ansible_facts['os_family'] == "Debian"
 
   roles:
+    - role: updates
+
     - role: bootstrap
       vars:
         bootstrap_timezone: "UTC"
@@ -90,11 +97,11 @@
     - role: keepalived
 
     - role: unbound
-      when: unbound_enabled | default(true)
+      when: unbound_enabled
 
     - role: pihole
 
     - role: pihole_updatelists
-      when: pihole_updatelists_enabled | default(true)
+      when: pihole_updatelists_enabled
 
     - role: status
