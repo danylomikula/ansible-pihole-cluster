@@ -1,6 +1,6 @@
 ---
 # Verify playbook for custom-config scenario
-# Tests custom Pi-hole configuration values
+# Tests non-default Pi-hole values and Unbound forward mode with Quad9 DoT
 
 - name: Load Hetzner state
   hosts: localhost
@@ -45,7 +45,7 @@
 
   vars:
     _vip_ipv4: "{{ _hcloud_state.keepalived_vip }}"
-    _enable_unbound: false
+    _enable_unbound: true
 
   tasks:
     # ============================================
@@ -63,11 +63,43 @@
       register: _keepalived_status
       failed_when: _keepalived_status.status.ActiveState != 'active'
 
-    - name: Verify unbound is NOT running (disabled in this scenario)
+    - name: Check if unbound service is running
       ansible.builtin.systemd:
         name: unbound
       register: _unbound_status
-      failed_when: false
+      failed_when: _unbound_status.status.ActiveState != 'active'
+
+    - name: Verify unbound configuration exists
+      ansible.builtin.stat:
+        path: /etc/unbound/unbound.conf
+      register: _unbound_config
+      failed_when: not _unbound_config.stat.exists
+
+    - name: Read unbound configuration
+      ansible.builtin.slurp:
+        path: /etc/unbound/unbound.conf
+      register: _unbound_config_content
+
+    - name: Verify Quad9 forward-zone configuration
+      ansible.builtin.assert:
+        that:
+          - "'forward-zone:' in (_unbound_config_content.content | b64decode)"
+          - "'forward-tls-upstream: yes' in (_unbound_config_content.content | b64decode)"
+          - "'tls-system-cert: yes' in (_unbound_config_content.content | b64decode)"
+          - "'9.9.9.9@853#dns.quad9.net' in (_unbound_config_content.content | b64decode)"
+          - "'149.112.112.112@853#dns.quad9.net' in (_unbound_config_content.content | b64decode)"
+          - "'2620:fe::fe@853#dns.quad9.net' in (_unbound_config_content.content | b64decode)"
+          - "'2620:fe::9@853#dns.quad9.net' in (_unbound_config_content.content | b64decode)"
+        fail_msg: "Quad9 forward-zone configuration not found in unbound.conf"
+        success_msg: "Quad9 forward-zone configuration correctly rendered"
+
+    - name: Check unbound is listening on port 5335
+      ansible.builtin.shell:
+        cmd: set -o pipefail && ss -tlnp 2>/dev/null | grep ':5335'
+        executable: /bin/bash
+      register: _unbound_listening
+      changed_when: false
+      failed_when: _unbound_listening.rc != 0
 
     # ============================================
     # CUSTOM CONFIGURATION VALIDATION
@@ -78,12 +110,12 @@
       register: _dns_upstreams
       changed_when: false
 
-    - name: Verify external DNS upstream is configured
+    - name: Verify unbound is configured as Pi-hole upstream
       ansible.builtin.assert:
         that:
-          - "'1.1.1.1' in _dns_upstreams.stdout or '8.8.8.8' in _dns_upstreams.stdout"
-        fail_msg: "External DNS not configured as upstream"
-        success_msg: "External DNS correctly configured"
+          - "'127.0.0.1#5335' in _dns_upstreams.stdout"
+        fail_msg: "Unbound not configured as Pi-hole upstream"
+        success_msg: "Unbound correctly configured as Pi-hole upstream"
 
     - name: Get DNS cache size
       ansible.builtin.command:
@@ -173,6 +205,13 @@
       until: _dns_vip.rc == 0
       when: inventory_hostname in groups['master']
 
+    - name: Test unbound forward resolver directly
+      ansible.builtin.command:
+        cmd: dig @127.0.0.1 -p 5335 google.com +short +time=10 +tries=3
+      register: _unbound_dns_test
+      changed_when: false
+      failed_when: _unbound_dns_test.rc != 0
+
     # ============================================
     # VERIFICATION SUMMARY
     # ============================================
@@ -185,10 +224,11 @@
           - "========================================"
           - "Pi-hole FTL: PASS"
           - "Keepalived: PASS"
-          - "Unbound: DISABLED (as expected)"
-          - "External DNS upstream: PASS"
+          - "Unbound forward mode (Quad9 DoT): PASS"
+          - "Pi-hole upstream -> local Unbound: PASS"
           - "Custom cache size (5000): PASS"
           - "Custom privacy level (2): PASS"
           - "Custom local domain: PASS"
           - "DNS via peer ({{ _peer_ip }}): PASS"
+          - "DNS via local Unbound: PASS"
           - "========================================"

@@ -1,9 +1,26 @@
 ---
 - name: Unbound role
-  when: unbound_enabled | default(true)
+  when: unbound_enabled
   tags:
     - unbound
   block:
+    - name: Validate unbound mode
+      ansible.builtin.assert:
+        that:
+          - unbound_mode in ['recursive', 'forward']
+        fail_msg: "unbound_mode must be either 'recursive' or 'forward'."
+      tags:
+        - unbound
+
+    - name: Validate unbound forward-zone configuration
+      ansible.builtin.assert:
+        that:
+          - unbound_forward_zone | trim | length > 0
+        fail_msg: "unbound_forward_zone must be set when unbound_mode is 'forward'."
+      when: unbound_mode == 'forward'
+      tags:
+        - unbound
+
     - name: Install unbound
       ansible.builtin.package:
         name: unbound
@@ -68,6 +85,13 @@
         state: absent
       when: _unbound_resolvconf.stat.exists
       notify: Restart unbound service
+      tags:
+        - unbound
+
+    - name: Validate unbound configuration
+      ansible.builtin.command:
+        cmd: unbound-checkconf /etc/unbound/unbound.conf
+      changed_when: false
       tags:
         - unbound
 

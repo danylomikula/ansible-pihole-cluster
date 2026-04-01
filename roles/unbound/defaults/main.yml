@@ -2,7 +2,7 @@
 # Unbound role defaults
 # https://docs.pi-hole.net/guides/dns/unbound/
 
-# Enable unbound recursive DNS resolver
+# Enable unbound DNS resolver
 unbound_enabled: true
 
 # Logging verbosity (0-5)
@@ -17,6 +17,16 @@ unbound_port: 5335
 unbound_num_threads: 1
 unbound_edns_buffer_size: 1232
 unbound_so_rcvbuf: "1m"
+
+# Resolver mode
+# - recursive: use Unbound as a recursive resolver
+# - forward: use a native Unbound forward-zone clause
+unbound_mode: "recursive"
+
+# Body of a single native forward-zone clause without the leading "forward-zone:" line.
+# See: https://unbound.docs.nlnetlabs.nl/en/latest/manpages/unbound.conf.html#forward-zone-options
+# Used only when unbound_mode is set to "forward".
+unbound_forward_zone: ""
 
 # Private domain for local resolution
 unbound_private_domain: "{{ pihole_local_domain | default('homelab.local') }}"

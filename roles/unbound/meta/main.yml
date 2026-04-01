@@ -3,7 +3,7 @@ dependencies: []
 
 galaxy_info:
   author: danylomikula
-  description: Install and configure unbound recursive DNS resolver
+  description: Install and configure unbound DNS resolver for recursive or forward-zone operation
   license: Apache-2.0
   min_ansible_version: "2.17"
   galaxy_tags:
@@ -13,10 +13,11 @@ galaxy_info:
 
 argument_specs:
   main:
-    short_description: Install and configure unbound recursive DNS
+    short_description: Install and configure unbound DNS resolver
     description:
-      - Installs unbound as a recursive DNS resolver
+      - Installs unbound as a DNS resolver
       - Configures unbound to work with Pi-hole
+      - Supports recursive and native forward-zone modes
       - Sets up EDNS buffer size for optimal performance
     options:
       unbound_enabled:
@@ -61,6 +62,19 @@ argument_specs:
         required: false
         default: "1m"
         description: SO_RCVBUF socket buffer size
+      unbound_mode:
+        type: str
+        required: false
+        default: "recursive"
+        choices:
+          - recursive
+          - forward
+        description: Resolver mode for unbound
+      unbound_forward_zone:
+        type: str
+        required: false
+        default: ""
+        description: Native forward-zone clause body without the leading forward-zone line
       unbound_private_domain:
         type: str
         required: false
