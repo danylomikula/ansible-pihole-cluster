@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.1.0](https://github.com/danylomikula/ansible-pihole-cluster/compare/v3.0.3...v3.1.0) (2026-04-01)
+
+
+### Features
+
+* add native unbound forward-zone support ([#29](https://github.com/danylomikula/ansible-pihole-cluster/issues/29)) ([573dfff](https://github.com/danylomikula/ansible-pihole-cluster/commit/573dfffb6f1444b58ec8c148efc5d53d9812e69c))
+
 ## [3.0.3](https://github.com/danylomikula/ansible-pihole-cluster/compare/v3.0.2...v3.0.3) (2026-03-31)
 
 
