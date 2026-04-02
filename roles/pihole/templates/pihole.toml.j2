@@ -142,4 +142,6 @@
 # MISC CONFIGURATION
 # =============================================================================
 [misc]
+  etc_dnsmasq_d = {{ pihole_etc_dnsmasq_d | lower }}
+  dnsmasq_lines = {{ pihole_dnsmasq_lines | to_json }}
   privacylevel = {{ pihole_privacy_level }}

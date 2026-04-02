@@ -143,6 +143,32 @@
         fail_msg: "Custom privacy level not applied (expected 2)"
         success_msg: "Custom privacy level correctly applied"
 
+    - name: Get misc.etc_dnsmasq_d
+      ansible.builtin.command:
+        cmd: pihole-FTL --config misc.etc_dnsmasq_d
+      register: _etc_dnsmasq_d
+      changed_when: false
+
+    - name: Verify dnsmasq.d loading is enabled
+      ansible.builtin.assert:
+        that:
+          - "'true' in (_etc_dnsmasq_d.stdout | lower)"
+        fail_msg: "misc.etc_dnsmasq_d not applied (expected true)"
+        success_msg: "misc.etc_dnsmasq_d correctly applied"
+
+    - name: Get misc.dnsmasq_lines
+      ansible.builtin.command:
+        cmd: pihole-FTL --config misc.dnsmasq_lines
+      register: _dnsmasq_lines
+      changed_when: false
+
+    - name: Verify custom dnsmasq lines
+      ansible.builtin.assert:
+        that:
+          - "'add-subnet=32,128' in _dnsmasq_lines.stdout"
+        fail_msg: "misc.dnsmasq_lines not applied (expected add-subnet=32,128)"
+        success_msg: "misc.dnsmasq_lines correctly applied"
+
     - name: Get local domain
       ansible.builtin.command:
         cmd: pihole-FTL --config dns.domain.name
@@ -228,6 +254,7 @@
           - "Pi-hole upstream -> local Unbound: PASS"
           - "Custom cache size (5000): PASS"
           - "Custom privacy level (2): PASS"
+          - "Custom dnsmasq settings: PASS"
           - "Custom local domain: PASS"
           - "DNS via peer ({{ _peer_ip }}): PASS"
           - "DNS via local Unbound: PASS"

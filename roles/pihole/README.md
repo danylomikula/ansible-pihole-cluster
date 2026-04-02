@@ -45,6 +45,8 @@ Installs and configures Pi-hole DNS sinkhole.
 | `pihole_dns_cache_size` | `10000` | DNS cache size |
 | `pihole_dnssec` | `false` | Enable DNSSEC validation |
 | `pihole_show_dnssec` | `true` | Show DNSSEC status in web UI |
+| `pihole_etc_dnsmasq_d` | `false` | Load additional dnsmasq configuration files from `/etc/dnsmasq.d` |
+| `pihole_dnsmasq_lines` | `[]` | Additional dnsmasq lines injected into Pi-hole FTL |
 
 **Client resolution:**
 
@@ -134,6 +136,20 @@ None
 ## Security Note
 
 Always use `ansible-vault` for `pihole_web_password`. The password is set securely using stdin and `no_log: true`.
+
+## Advanced DNSMasq Settings
+
+Pi-hole exposes advanced dnsmasq passthrough options through `pihole_etc_dnsmasq_d` and `pihole_dnsmasq_lines`.
+
+Example: send full ECS upstream metadata for testing split-horizon behavior:
+
+```yaml
+pihole_etc_dnsmasq_d: true
+pihole_dnsmasq_lines:
+  - "add-subnet=32,128"
+```
+
+Use these settings carefully. Invalid dnsmasq options can prevent DNS resolution from starting.
 
 ## License
 

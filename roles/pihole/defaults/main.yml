@@ -58,6 +58,8 @@ pihole_bogus_priv: true
 pihole_dns_cache_size: 10000
 pihole_dnssec: false
 pihole_show_dnssec: true
+pihole_etc_dnsmasq_d: false
+pihole_dnsmasq_lines: []
 
 # Client resolution
 pihole_resolve_ipv4: true
