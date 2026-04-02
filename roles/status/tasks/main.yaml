@@ -36,7 +36,7 @@
 - name: Determine Pi-hole virtual IP addresses
   ansible.builtin.set_fact:
     _status_vip_ipv4: "{{ (keepalived_vip_ipv4 | default('10.20.0.53/16')).split('/')[0] }}"
-    _status_vip_ipv6: "{{ (ipv6_vip | default('fe80::53/64')).split('/')[0] if (ipv6_enabled | default(false)) else 'IPv6 Disabled' }}"
+    _status_vip_ipv6: "{{ (ipv6_vip | default('', true) | trim).split('/')[0] if (ipv6_enabled | default(false)) and (ipv6_vip | default('', true) | trim | length > 0) else 'IPv6 Disabled' }}"
   tags:
     - status
 

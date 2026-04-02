@@ -1,32 +1,53 @@
 {# v3.0.0 - Uses global ipv6_* variables #}
 {% set _enable_ipv6 = ipv6_enabled | default(false) %}
 {% set _vip_ipv4 = keepalived_vip_ipv4 | default('10.20.0.53/16') %}
-{% set _vip_ipv6 = ipv6_vip | default('fe80::53/64') %}
+{% set _vip_ipv6 = ipv6_vip | default('') %}
 {% set _router_id = keepalived_virtual_router_id | default(1) %}
 {% set _advert_int = keepalived_advert_int | default(1) %}
 {% set _preempt_delay = keepalived_preempt_delay | default(900) %}
-{# Use configurable interface or fall back to default #}
+{# Use configurable interfaces or fall back to detected defaults #}
 {% if keepalived_interface | default('') | length > 0 %}
-{% set _interface = keepalived_interface %}
+{% set _interface_ipv4 = keepalived_interface %}
 {% else %}
-{% set _interface = ansible_facts['default_ipv4']['interface'] %}
+{% set _interface_ipv4 = ansible_facts['default_ipv4']['interface'] %}
 {% endif %}
-{# Unicast source IP - configurable or fall back to default #}
+{% if keepalived_interface_ipv6 | default('') | length > 0 %}
+{% set _interface_ipv6 = keepalived_interface_ipv6 %}
+{% else %}
+{% set _interface_ipv6 = ansible_facts['default_ipv6']['interface'] | default(_interface_ipv4) %}
+{% endif %}
+{# Unicast source IPs - optional explicit overrides. If unset, keepalived uses the
+   primary address on the interface, which matches the documented default behavior. #}
 {% if keepalived_unicast_src_ip | default('') | length > 0 %}
-{% set _unicast_src_ip = keepalived_unicast_src_ip %}
+{% set _unicast_src_ip_ipv4 = keepalived_unicast_src_ip %}
 {% else %}
-{% set _unicast_src_ip = ansible_facts['default_ipv4']['address'] %}
+{% set _unicast_src_ip_ipv4 = '' %}
 {% endif %}
-{# Build unicast peer list (all cluster hosts except current) #}
-{% set _peers = [] %}
+{% if keepalived_unicast_src_ip_ipv6 | default('') | length > 0 %}
+{% set _unicast_src_ip_ipv6 = keepalived_unicast_src_ip_ipv6 %}
+{% else %}
+{% set _unicast_src_ip_ipv6 = '' %}
+{% endif %}
+{# Build per-family unicast peer lists (all cluster hosts except current) #}
+{% set _peers_ipv4 = [] %}
+{% set _peers_ipv6 = [] %}
 {% for host in groups['pihole_cluster'] | default([]) %}
 {% if host != inventory_hostname %}
-{# Use keepalived_unicast_src_ip from peer if set, otherwise ansible_host or default IP #}
-{% set _peer_ip = hostvars[host].keepalived_unicast_src_ip | default('') %}
-{% if _peer_ip | length == 0 %}
-{% set _peer_ip = hostvars[host].ansible_host | default(hostvars[host].ansible_facts['default_ipv4']['address']) %}
+{# Use host-specific unicast source IPs when defined, then fall back to gathered facts. #}
+{% set _peer_ip_ipv4 = hostvars[host].keepalived_unicast_src_ip | default('') %}
+{% if _peer_ip_ipv4 | length == 0 %}
+{% set _peer_ip_ipv4 = hostvars[host].ansible_host | default(hostvars[host].ansible_facts['default_ipv4']['address']) %}
 {% endif %}
-{% set _ = _peers.append(_peer_ip) %}
+{% if _peer_ip_ipv4 | length > 0 %}
+{% set _ = _peers_ipv4.append(_peer_ip_ipv4) %}
+{% endif %}
+{% set _peer_ip_ipv6 = hostvars[host].keepalived_unicast_src_ip_ipv6 | default('') %}
+{% if _peer_ip_ipv6 | length == 0 %}
+{% set _peer_ip_ipv6 = hostvars[host].ansible_facts['default_ipv6']['address'] | default('') %}
+{% endif %}
+{% if _peer_ip_ipv6 | length > 0 %}
+{% set _ = _peers_ipv6.append(_peer_ip_ipv6) %}
+{% endif %}
 {% endif %}
 {% endfor %}
 
@@ -59,16 +80,18 @@ vrrp_sync_group PIHOLE {
 }
 
 vrrp_instance PIHOLE-IPv4 {
-    interface {{ _interface }}
+    interface {{ _interface_ipv4 }}
     virtual_router_id {{ _router_id }}
     priority {{ priority }}
     advert_int {{ _advert_int }}
     preempt_delay {{ _preempt_delay }}
 
-{% if _peers | length > 0 %}
-    unicast_src_ip {{ _unicast_src_ip }}
+{% if _peers_ipv4 | length > 0 %}
+{% if _unicast_src_ip_ipv4 | length > 0 %}
+    unicast_src_ip {{ _unicast_src_ip_ipv4 }}
+{% endif %}
     unicast_peer {
-{% for peer in _peers %}
+{% for peer in _peers_ipv4 %}
         {{ peer }}
 {% endfor %}
     }
@@ -80,16 +103,18 @@ vrrp_instance PIHOLE-IPv4 {
 }
 
 vrrp_instance PIHOLE-IPv6 {
-    interface {{ ansible_facts['default_ipv6']['interface'] | default(_interface) }}
+    interface {{ _interface_ipv6 }}
     virtual_router_id {{ _router_id + 1 }}
     priority {{ priority }}
     advert_int {{ _advert_int }}
     preempt_delay {{ _preempt_delay }}
 
-{% if _peers | length > 0 %}
-    unicast_src_ip {{ _unicast_src_ip }}
+{% if _peers_ipv6 | length > 0 %}
+{% if _unicast_src_ip_ipv6 | length > 0 %}
+    unicast_src_ip {{ _unicast_src_ip_ipv6 }}
+{% endif %}
     unicast_peer {
-{% for peer in _peers %}
+{% for peer in _peers_ipv6 %}
         {{ peer }}
 {% endfor %}
     }
@@ -111,16 +136,18 @@ vrrp_sync_group PIHOLE {
 }
 
 vrrp_instance PIHOLE-IPv4 {
-    interface {{ _interface }}
+    interface {{ _interface_ipv4 }}
     virtual_router_id {{ _router_id }}
     priority {{ priority }}
     advert_int {{ _advert_int }}
     preempt_delay {{ _preempt_delay }}
 
-{% if _peers | length > 0 %}
-    unicast_src_ip {{ _unicast_src_ip }}
+{% if _peers_ipv4 | length > 0 %}
+{% if _unicast_src_ip_ipv4 | length > 0 %}
+    unicast_src_ip {{ _unicast_src_ip_ipv4 }}
+{% endif %}
     unicast_peer {
-{% for peer in _peers %}
+{% for peer in _peers_ipv4 %}
         {{ peer }}
 {% endfor %}
     }

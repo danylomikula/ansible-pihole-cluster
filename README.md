@@ -85,7 +85,7 @@ Create **`site.yml`** - the main playbook with all configuration:
     bootstrap_timezone: "America/New_York"
     keepalived_vip_ipv4: "10.20.0.53/16"           # Virtual IP for failover
     pihole_web_password: "your-secure-password"    # Use ansible-vault!
-    pihole_version: "6.3"
+    pihole_version: "6.4"
     nebula_sync_version: "v0.11.1"
     pihole_local_domain: "homelab.local"
     local_dns_records: |
@@ -103,7 +103,7 @@ Create **`site.yml`** - the main playbook with all configuration:
     - role: danylomikula.ansible_pihole_cluster.status
 ```
 
-> See the full list of available variables in the [group_vars/all.yml](group_vars/all.yml) example.
+> See the [group_vars/all.yml](group_vars/all.yml) example for common variables and configuration patterns.
 >
 > By default, the `unbound` role uses `recursive` mode. If you want to forward DNS queries to Quad9 over TLS instead, add this to your `vars`:
 > ```yaml
@@ -142,7 +142,7 @@ To quickly update system or change settings, create an `update_cluster.yml` play
   hosts: pihole_cluster
   become: true
   vars:
-    pihole_version: "6.3"
+    pihole_version: "6.4"
     nebula_sync_version: "v0.11.1"
   roles:
     - role: danylomikula.ansible_pihole_cluster.updates
@@ -206,7 +206,7 @@ Set two global variables to enable IPv6 support across all components:
 
 ```yaml
 ipv6_enabled: true
-ipv6_vip: "fd00::53/64"
+ipv6_vip: "2001:db8:53::53/64"
 ```
 
 ## Authors

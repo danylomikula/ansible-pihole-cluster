@@ -14,7 +14,7 @@ Installs and configures Pi-hole DNS sinkhole.
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `pihole_version` | `6.3` | Pi-hole version |
+| `pihole_version` | `6.4` | Pi-hole version |
 | `pihole_web_password` | **required** | Web UI password (use vault) |
 | `pihole_manage_config` | `true` | Manage pihole.toml on every run (set `false` to keep web UI changes) |
 | `pihole_reboot_after_run` | `true` | Reboot cluster in order after install (master -> backup) |
@@ -114,7 +114,7 @@ Installs and configures Pi-hole DNS sinkhole.
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `ipv6_enabled` | `false` | Enable IPv6 support |
-| `ipv6_vip` | `fe80::53/64` | IPv6 virtual IP address (CIDR notation) |
+| `ipv6_vip` | `""` | IPv6 virtual IP address (CIDR notation); set it when `ipv6_enabled: true` |
 
 ## Dependencies
 
