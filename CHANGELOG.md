@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.1.1](https://github.com/danylomikula/ansible-pihole-cluster/compare/v3.1.0...v3.1.1) (2026-04-02)
+
+
+### Bug Fixes
+
+* align IPv6 VIP defaults and keepalived auto-detection ([#31](https://github.com/danylomikula/ansible-pihole-cluster/issues/31)) ([d679d4c](https://github.com/danylomikula/ansible-pihole-cluster/commit/d679d4c24eac307e60f732375cb8214f90bfc913))
+
 ## [3.1.0](https://github.com/danylomikula/ansible-pihole-cluster/compare/v3.0.3...v3.1.0) (2026-04-01)
 
 
