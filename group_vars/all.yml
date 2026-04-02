@@ -10,7 +10,7 @@ pihole_reboot_after_run: true           # Reboot cluster in order after Pi-hole 
 # GLOBAL IPv6 SETTINGS
 # =============================================================================
 ipv6_enabled: false                     # Enable IPv6 support (keepalived, pihole)
-ipv6_vip: "fe80::53/64"                 # IPv6 virtual IP address (CIDR notation)
+ipv6_vip: ""                            # IPv6 virtual IP address (CIDR notation), e.g. "2001:db8:53::53/64"
 
 # =============================================================================
 # BOOTSTRAP ROLE
@@ -21,6 +21,11 @@ bootstrap_timezone: "America/New_York"  # https://en.wikipedia.org/wiki/List_of_
 # KEEPALIVED ROLE (HA Failover)
 # =============================================================================
 keepalived_vip_ipv4: "10.20.0.53/16"    # Floating (virtual) IPv4 for failover
+# Advanced optional overrides:
+# keepalived_interface: ""              # Override auto-detected IPv4 VRRP interface
+# keepalived_interface_ipv6: ""         # Override auto-detected IPv6 VRRP interface
+# keepalived_unicast_src_ip: ""         # Override IPv4 VRRP source address
+# keepalived_unicast_src_ip_ipv6: ""    # Override IPv6 VRRP source address
 keepalived_virtual_router_id: 1         # VRRP router ID (change if multiple clusters on same network)
 keepalived_advert_int: 1                # Advertisement interval in seconds
 keepalived_preempt_delay: 900           # Preemption delay in seconds

@@ -25,6 +25,26 @@ argument_specs:
         required: false
         default: "10.20.0.53/16"
         description: Virtual IPv4 address with CIDR notation (e.g., 10.20.0.53/16)
+      keepalived_interface:
+        type: str
+        required: false
+        default: ""
+        description: VRRP interface for IPv4 advertisements and VIP assignment
+      keepalived_interface_ipv6:
+        type: str
+        required: false
+        default: ""
+        description: VRRP interface for IPv6 advertisements and VIP assignment
+      keepalived_unicast_src_ip:
+        type: str
+        required: false
+        default: ""
+        description: Unicast source IPv4 address for VRRP advertisements
+      keepalived_unicast_src_ip_ipv6:
+        type: str
+        required: false
+        default: ""
+        description: Unicast source IPv6 address for VRRP advertisements
       keepalived_virtual_router_id:
         type: int
         required: false
@@ -64,3 +84,13 @@ argument_specs:
         type: int
         required: true
         description: VRRP priority (higher value = more likely to be master)
+      ipv6_enabled:
+        type: bool
+        required: false
+        default: false
+        description: Enable a separate IPv6 VRRP instance
+      ipv6_vip:
+        type: str
+        required: false
+        default: ""
+        description: Virtual IPv6 address with CIDR notation; required when ipv6_enabled is true

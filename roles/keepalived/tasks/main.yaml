@@ -26,6 +26,14 @@
 - name: Flush handlers
   ansible.builtin.meta: flush_handlers
 
+- name: Validate IPv6 keepalived settings
+  ansible.builtin.assert:
+    that:
+      - not (ipv6_enabled | default(false)) or (ipv6_vip | default('') | trim | length > 0)
+    fail_msg: "ipv6_vip must be set when ipv6_enabled is true."
+  tags:
+    - keepalived
+
 - name: Install keepalived
   ansible.builtin.package:
     name: keepalived

@@ -29,14 +29,14 @@ argument_specs:
       ipv6_vip:
         type: str
         required: false
-        default: "fe80::53/64"
-        description: IPv6 virtual IP address with CIDR notation
+        default: ""
+        description: IPv6 virtual IP address with CIDR notation; set it when ipv6_enabled is true
 
       # Installation
       pihole_version:
         type: str
         required: false
-        default: "6.3"
+        default: "6.4"
         description: Pi-hole version to install
       pihole_web_password:
         type: str

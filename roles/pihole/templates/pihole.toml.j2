@@ -4,7 +4,7 @@
 {% set _enable_unbound = unbound_enabled | default(true) %}
 {% set _enable_ipv6 = ipv6_enabled | default(false) %}
 {% set _vip_ipv4 = keepalived_vip_ipv4 | default('10.20.0.53/16') %}
-{% set _vip_ipv6 = ipv6_vip | default('fe80::53/64') %}
+{% set _vip_ipv6 = ipv6_vip | default('') %}
 
 # =============================================================================
 # DNS CONFIGURATION
