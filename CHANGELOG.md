@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.2.0](https://github.com/danylomikula/ansible-pihole-cluster/compare/v3.1.1...v3.2.0) (2026-04-02)
+
+
+### Features
+
+* add Pi-hole dnsmasq passthrough settings ([#33](https://github.com/danylomikula/ansible-pihole-cluster/issues/33)) ([04895c5](https://github.com/danylomikula/ansible-pihole-cluster/commit/04895c5a0731c0f6381639186ef5793ecc3bcc27))
+
 ## [3.1.1](https://github.com/danylomikula/ansible-pihole-cluster/compare/v3.1.0...v3.1.1) (2026-04-02)
 
 
