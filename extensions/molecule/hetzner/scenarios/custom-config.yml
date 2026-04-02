@@ -51,6 +51,9 @@
     pihole_privacy_level: 2
     pihole_ntp_sync_server: "time.google.com"
     pihole_local_domain: "custom.test"
+    pihole_etc_dnsmasq_d: true
+    pihole_dnsmasq_lines:
+      - "add-subnet=32,128"
     # Keepalived tuning
     keepalived_check_interval: 2
     keepalived_check_timeout: 2

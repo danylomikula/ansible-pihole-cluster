@@ -196,6 +196,17 @@ argument_specs:
         required: false
         default: true
         description: Show DNSSEC status in web interface
+      pihole_etc_dnsmasq_d:
+        type: bool
+        required: false
+        default: false
+        description: Load additional dnsmasq configuration files from /etc/dnsmasq.d
+      pihole_dnsmasq_lines:
+        type: list
+        elements: str
+        required: false
+        default: []
+        description: Additional dnsmasq configuration lines to inject into Pi-hole FTL
 
       # Client resolution
       pihole_resolve_ipv4:

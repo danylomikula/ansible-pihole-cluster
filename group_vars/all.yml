@@ -115,6 +115,12 @@ pihole_domain_needed: false
 pihole_bogus_priv: true
 pihole_dnssec: false
 pihole_show_dnssec: true
+pihole_etc_dnsmasq_d: false             # Load additional dnsmasq snippets from /etc/dnsmasq.d
+pihole_dnsmasq_lines: []                # Extra dnsmasq lines injected into Pi-hole FTL
+# Example: send full ECS upstream metadata
+# pihole_etc_dnsmasq_d: true
+# pihole_dnsmasq_lines:
+#   - "add-subnet=32,128"
 pihole_ptr: "HOSTNAMEFQDN"              # NONE, HOSTNAME, HOSTNAMEFQDN, PI.HOLE
 
 # DNS Cache & Database
